@@ -43,7 +43,7 @@ def extract_video_metadata(video_path: Path) -> dict | None:
 
 
 def process_videos():
-    """Load raw test.csv, collect metadata for each video, and save processed CSV."""
+    """Load raw test.csv, collect metadata for each video. Save processed CSV and test videos into new dataset"""
     print(f"Loading raw CSV from: {RAW_TEST_CSV}")
 
     if not RAW_TEST_CSV.exists():
