@@ -2,8 +2,6 @@
 
 Repository for the dissertation project: "An End-to-End Analysis of a Training-Free Pipeline for Zero-Shot Video Action Recognition".
 
-Dataset: [UCF101 Action Recognition](https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition)
-
 ## Setup
 
 Initialise Conda (Windows):
@@ -35,3 +33,7 @@ Deactivate when done:
 ```bash
 conda deactivate
 ```
+
+## Dataset
+
+This project uses the [UCF101 Action Recognition Dataset](https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition). This repository already contains the generated embeddings dataset that are required for the action recognition. If you want to recreate the embeddings dataset yourself, follow the instructions [here](colab_instructions.md).

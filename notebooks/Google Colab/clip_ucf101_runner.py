@@ -24,6 +24,10 @@ You must specify the paths to find the .zip file containing the dataset folder, 
 import os
 from pathlib import Path
 
+# Avoid Hugging Face "create an API key" prompts
+os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
+os.environ["TRANSFORMERS_NO_ADVISORY_WARNINGS"] = "1"
+
 # Path to the zip with the dataset folder inside
 DRIVE_ZIP_PATH = "/content/drive/My Drive/Dissertation/data/ucf101_subset.zip"
 
@@ -48,7 +52,7 @@ GDRIVE_OUTPUT_DIR = Path("/content/drive/My Drive/Dissertation/data/ucf101_embed
 """## Unzip the dataset folder"""
 
 print("Unzipping video data... (this may take a few minutes)")
-!unzip -oq "{DRIVE_ZIP_PATH}" -d "{str(LOCAL_DATA_DIR)}"
+!unzip -oq "{DRIVE_ZIP_PATH}" -d "{LOCAL_DATA_DIR}"
 print("Data unzipped successfully.")
 
 # Check that the data has been unzipped correctly
@@ -85,24 +89,18 @@ print("Model loaded.")
 df = pd.read_csv(LOCAL_CSV_PATH)
 df.head()
 
-def extract_all_frames(video_path: str):
-    """
-    Opens a video file and extracts all frames into a list of RGB images (as required for CLIP).
-    """
+def extract_all_frames(video_path: Path):
     frames = []
-    cap = cv2.VideoCapture(video_path)
-
+    cap = cv2.VideoCapture(str(video_path))
     if not cap.isOpened():
-        print(f"Warning: Could not open video: {video_path}")
-        return None
+        print(f"Warning: Cannot open {video_path}")
+        return []
 
     while True:
         ret, frame = cap.read()
         if not ret:
             break
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-        frames.append(frame)
-
+        frames.append(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
     cap.release()
     return frames
 
@@ -116,28 +114,24 @@ start_time = time.time()
 test_row = df.iloc[0]
 test_video_path = LOCAL_DATASET_ROOT / test_row['clip_path'].lstrip('/')
 
-test_frames = extract_all_frames(str(test_video_path))
+test_frames = extract_all_frames(test_video_path)
 
-if test_frames:
-    with torch.no_grad():
-        for i in range(0, len(test_frames), BATCH_SIZE):
-            batch = test_frames[i : i + BATCH_SIZE]
-            # The processor handles resizing (to 224x224) and normalization
-            inputs = processor(text=None, images=batch, return_tensors="pt", padding=True)
-            inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
-            model.get_image_features(**inputs) # Run inference
+with torch.no_grad():
+    for i in range(0, len(test_frames), BATCH_SIZE):
+        batch = test_frames[i : i + BATCH_SIZE]
+        # The processor handles resizing (to 224x224) and normalization
+        inputs = processor(text=None, images=batch, return_tensors="pt", padding=True)
+        inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
+        model.get_image_features(**inputs) # Run inference
 
 end_time = time.time()
+
 time_per_video = end_time - start_time
 total_videos = len(df)
 estimated_total_time_min = (time_per_video * total_videos) / 60
 
-if test_frames:
-    print(f"Time for 1 video ({len(test_frames)} frames): {time_per_video:.2f} seconds.")
-else:
-    print(f"Warning: Failed to process test video {test_video_path}, cannot estimate time per video.")
-    print(f"Estimated total time for {total_videos} videos: N/A minutes.")
-
+print(f"Time for 1 video ({len(test_frames)} frames): {time_per_video:.2f} seconds.")
+print(f"Estimated time to process {total_videos} videos: {estimated_total_time_min:.2f} minutes.")
 print("Time Estimation Complete")
 
 """## Run inference on all videos and save embeddings to output directory
@@ -171,23 +165,16 @@ for index, row in tqdm(df.iterrows(), total=df.shape[0], desc="Processing videos
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Get the video's frames
-    frames = extract_all_frames(str(full_video_path))
-
-    if not frames:
-        print(f"Warning: Failed to read frames from {full_video_path}, skipping.")
-        continue
+    frames = extract_all_frames(full_video_path)
 
     all_embeddings = []
     with torch.no_grad():
         for i in range(0, len(frames), BATCH_SIZE):
-            batch_frames = frames[i : i + BATCH_SIZE]
-
             # The processor handles resizing (to 224x224) and normalization
-            inputs = processor(text=None, images=batch_frames, return_tensors="pt", padding=True)
-            inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
-
-            image_features = model.get_image_features(**inputs) # Run inference
-            all_embeddings.append(image_features.cpu())
+            batch = frames[i:i+BATCH_SIZE]
+            inputs = processor(text=None, images=batch, return_tensors="pt", padding=True)
+            inputs = {k: v.to(DEVICE) for k,v in inputs.items()}
+            all_embeddings.append(model.get_image_features(**inputs).cpu())
 
     if not all_embeddings:
         print(f"Warning: No embeddings generated for {full_video_path}, skipping.")
