@@ -36,4 +36,25 @@ conda deactivate
 
 ## Dataset
 
-This project uses the [UCF101 Action Recognition Dataset](https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition). This repository already contains the generated embeddings dataset that are required for the action recognition. If you want to recreate the embeddings dataset yourself, follow the instructions [here](colab_instructions.md).
+This project uses the [UCF101 Action Recognition Dataset](https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition).
+
+Dataset paper citation:
+
+@article{soomro2012ucf101,
+  title={Ucf101: A dataset of 101 human actions classes from videos in the wild},
+  author={Soomro, Khurram and Zamir, Amir Roshan and Shah, Mubarak},
+  journal={arXiv preprint arXiv:1212.0402},
+  year={2012}
+}
+
+Dataset download link:
+
+@misc{jansen2022ucf101kaggle,
+  author={Matthew Jansen},
+  title={UCF101 - Action Recognition},
+  howpublished={\url{https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition}},
+  year={2022},
+  note={Accessed: 2025-11-05}
+}
+
+This repository already contains the generated embeddings dataset that are required for the action recognition. If you want to recreate the embeddings dataset yourself, follow the instructions [here](colab_instructions.md).
