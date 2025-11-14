@@ -22,19 +22,19 @@ class UCF101SubsetDataset:
         if not csv_path.exists():
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")
 
-        self._df = pd.read_csv(csv_path)
+        self.df = pd.read_csv(csv_path)
 
-    def get_embeddings(self, video_index: int):
+    def get_embeddings(self, video_index: int) -> torch.Tensor:
         """
         Retrieves the pre-computed embeddings for a given video index.
 
         This method finds the file whether it is .pt or .npy,
-        and always returns a NumPy array.
+        and always returns a PyTorch tensor.
         """
-        if not (0 <= video_index < len(self._df)):
+        if not (0 <= video_index < len(self.df)):
             raise IndexError("video_index out of range")
 
-        row = self._df.iloc[video_index]
+        row = self.df.iloc[video_index]
 
         embeddings_relative_path = Path(row["clip_path"].strip("/")).with_suffix("")
 
@@ -45,12 +45,12 @@ class UCF101SubsetDataset:
         pt_path = full_embeddings_path.with_suffix(".pt")
 
         if npy_path.exists():
-            # Load NumPy array directly
-            return np.load(npy_path)
+            # Load NumPy array and convert to PyTorch tensor
+            array = np.load(npy_path)
+            return torch.from_numpy(array)
         elif pt_path.exists():
-            # Load PyTorch tensor, convert to NumPy, and return
-            tensor = torch.load(pt_path)
-            return tensor.cpu().numpy()
+            # Load PyTorch tensor directly
+            return torch.load(pt_path)
         else:
             raise FileNotFoundError(
                 f"No embedding file found for base path: {full_embeddings_path}"
@@ -59,10 +59,10 @@ class UCF101SubsetDataset:
             )
 
     def get_video_path(self, video_index: int):
-        if not (0 <= video_index < len(self._df)):
+        if not (0 <= video_index < len(self.df)):
             raise IndexError("video_index out of range")
 
-        row = self._df.iloc[video_index]
+        row = self.df.iloc[video_index]
         video_relative_path = Path(row["clip_path"].strip("/")).with_suffix(".avi")
         video_path = self.videos_root / video_relative_path
 
@@ -72,14 +72,14 @@ class UCF101SubsetDataset:
         return video_path
 
     def get_dataset_size(self):
-        return len(self._df)
+        return len(self.df)
 
     def __len__(self):
         """Allows `len(dataset)` to work."""
         return self.get_dataset_size()
 
     def __getitem__(self, idx):
-        """Allows indexing (e.g., `dataset[0]`) for use in a DataLoader."""
+        """Allows indexing"""
         video_path = self.get_video_path(idx)
         embeddings = self.get_embeddings(idx)
         return video_path, embeddings
