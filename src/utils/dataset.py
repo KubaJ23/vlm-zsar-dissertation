@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import torch
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data"
+from src.utils.constants import TEST_CSV, UCF101_EMBEDDINGS_DIR, UCF101_VIDEOS_DIR
 
 
 class UCF101SubsetDataset:
@@ -13,11 +13,11 @@ class UCF101SubsetDataset:
     pre-computed frame embeddings.
     """
 
-    def __init__(self, split="test"):
-        self.embeddings_root = DATA_DIR / "ucf101_embeddings"
-        self.videos_root = DATA_DIR / "ucf101_subset"
+    def __init__(self):
+        self.embeddings_root = UCF101_EMBEDDINGS_DIR
+        self.videos_root = UCF101_VIDEOS_DIR
 
-        csv_path = self.embeddings_root / f"{split}.csv"
+        csv_path = TEST_CSV
 
         if not csv_path.exists():
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")

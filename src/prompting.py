@@ -13,12 +13,12 @@ from abc import ABC, abstractmethod
 
 import torch
 
-from . import utils
+from src import utils
 
 
 class ClassPrompter(ABC):
     @abstractmethod
-    def get_prompt_embeddings(self, embeddings: torch.Tensor) -> torch.Tensor:
+    def get_prompt_embeddings(self, classes: list[str]) -> dict[str, torch.Tensor]:
         pass
 
 
