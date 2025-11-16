@@ -1,27 +1,22 @@
-# This file adapts or copies code from the official ActionCLIP implementation.
-# Original source: https://github.com/sallymmx/ActionCLIP/blob/master/utils/Text_Prompt.py
-#
-# Original paper citation:
-# @article{wang2021actionclip,
-#   title={Actionclip: A new paradigm for video action recognition},
-#   author={Wang, Mengmeng and Xing, Jiazheng and Liu, Yong},
-#   journal={arXiv preprint arXiv:2109.08472},
-#   year={2021}
-# }
-
+import json
 from abc import ABC, abstractmethod
+from pathlib import Path
 
 import torch
+from tqdm import tqdm
 
-from src import utils
+from src.utils import clip
 
 
 class ClassPrompter(ABC):
     @abstractmethod
-    def get_prompt_embeddings(self, classes: list[str]) -> dict[str, torch.Tensor]:
+    def get_prompt_embeddings(self) -> dict[str, torch.Tensor]:
         pass
 
 
+# Adapted from the ActionCLIP implementation:
+# https://github.com/sallymmx/ActionCLIP/blob/master/utils/Text_Prompt.py
+# Full citation is provided in the project README.
 class TemplatePrompts(ClassPrompter):
     _templates = [
         "a photo of action {}",
@@ -42,23 +37,58 @@ class TemplatePrompts(ClassPrompter):
         "The woman is {}",
     ]
 
-    def get_prompt_embeddings(self, classes: list[str]) -> dict[str, torch.Tensor]:
+    def __init__(self, classes: list[str]):
+        self.name = "TemplatePrompts"
+
         class_to_embedding = {}
 
         for cls in classes:
             descriptions = [t.format(cls) for t in self._templates]
 
-            texts = utils.clip.processor(
+            texts = clip.processor(
                 text=descriptions, return_tensors="pt", padding=True
-            ).to(utils.clip.DEVICE)
+            ).to(clip.DEVICE)
 
             with torch.no_grad():
-                embeddings = utils.clip.model.get_text_features(**texts)
+                embeddings = clip.model.get_text_features(**texts)
                 mean_embedding = embeddings.mean(dim=0)
                 class_to_embedding[cls] = mean_embedding
+        self.class_to_embedding = class_to_embedding
 
-        return class_to_embedding
+    def get_prompt_embeddings(self) -> dict[str, torch.Tensor]:
+        return self.class_to_embedding
 
 
 class MPVRPrompts(ClassPrompter):
-    def get_prompt_embeddings(self, classes: list[str]) -> dict[str, torch.Tensor]: ...
+    """Generates text embeddings for each class using MPVR-style descriptions from a JSON file."""
+
+    def __init__(self, classes: list[str], descriptions_path: Path):
+        self.name = "MPVRPrompts"
+        self.class_to_embedding: dict[str, torch.Tensor] = {}
+
+        if not descriptions_path.exists():
+            raise FileNotFoundError(f"Descriptions file not found: {descriptions_path}")
+
+        with descriptions_path.open("r") as f:
+            original_data = json.load(f)
+
+        descriptions_data = {}
+        for class_name, descriptions in original_data.items():
+            processed_key = class_name.title().replace(" ", "")
+            descriptions_data[processed_key] = descriptions
+
+        for cls in tqdm(classes, desc="Generating MPVR embeddings"):
+            descriptions = descriptions_data.get(cls)
+            if not descriptions:
+                raise ValueError(f"No descriptions found for class: {cls}")
+
+            texts = clip.processor(
+                text=descriptions, return_tensors="pt", padding=True, truncation=True
+            ).to(clip.DEVICE)
+
+            with torch.no_grad():
+                embeddings = clip.model.get_text_features(**texts)
+                self.class_to_embedding[cls] = embeddings.mean(dim=0)
+
+    def get_prompt_embeddings(self) -> dict[str, torch.Tensor]:
+        return self.class_to_embedding

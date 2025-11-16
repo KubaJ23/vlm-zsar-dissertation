@@ -10,6 +10,9 @@ class Aggregator(ABC):
 
 
 class MeanPooling(Aggregator):
+    def __init__(self):
+        self.name = "MeanPooling"
+
     def aggregate(self, embeddings: torch.Tensor) -> torch.Tensor:
         return embeddings.mean(dim=0)
 

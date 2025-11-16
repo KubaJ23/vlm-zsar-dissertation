@@ -1,4 +1,2 @@
-data/*
-!data/ucf101_embeddings/
-
+data/UCF-101/*
 **/__pycache__/

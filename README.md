@@ -58,3 +58,17 @@ Dataset download link:
 }
 
 This repository already contains the generated embeddings dataset that are required for the action recognition. If you want to recreate the embeddings dataset yourself, follow the instructions [here](colab_instructions.md).
+
+## Citations
+
+This project adapts parts of the implementations of some ZSAR algorithms. Below are citations to the sources of these implementations.
+
+- Original source: https://github.com/sallymmx/ActionCLIP
+```bibtex
+@article{wang2021actionclip,
+  title={Actionclip: A new paradigm for video action recognition},
+  author={Wang, Mengmeng and Xing, Jiazheng and Liu, Yong},
+  journal={arXiv preprint arXiv:2109.08472},
+  year={2021}
+}
+```

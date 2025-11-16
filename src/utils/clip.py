@@ -9,4 +9,4 @@ model = CLIPModel.from_pretrained(
     MODEL_ID, trust_remote_code=False, use_safetensors=True
 ).to(DEVICE)
 
-processor = CLIPProcessor.from_pretrained(MODEL_ID)
+processor = CLIPProcessor.from_pretrained(MODEL_ID, use_fast=True)

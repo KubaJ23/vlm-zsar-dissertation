@@ -12,6 +12,7 @@ class Sampler(ABC):
 class UniformSampler(Sampler):
     def __init__(self, num_samples: int):
         self.num_samples = num_samples
+        self.name = f"UniformSampler{num_samples}"
 
     def sample(self, embeddings: torch.Tensor) -> torch.Tensor:
         """

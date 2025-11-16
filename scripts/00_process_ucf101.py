@@ -77,6 +77,8 @@ def main():
     df_final = df.merge(metadata_df, on="clip_name", how="inner")
     df_final.to_csv(TEST_CSV, index=False)
 
+    print(f"\nMetadata saved to {TEST_CSV}")
+
 
 if __name__ == "__main__":
     main()

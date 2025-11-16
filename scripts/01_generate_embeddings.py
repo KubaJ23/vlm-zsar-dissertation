@@ -96,6 +96,8 @@ def generate_embeddings(
         embedding_tensor = torch.cat(all_embeddings, dim=0)
         torch.save(embedding_tensor, embed_path)
 
+    print(f"\nEmbeddings saved to {embeddings_dir}")
+
 
 if __name__ == "__main__":
     generate_embeddings(TEST_CSV, UCF101_VIDEOS_DIR, UCF101_EMBEDDINGS_DIR)
