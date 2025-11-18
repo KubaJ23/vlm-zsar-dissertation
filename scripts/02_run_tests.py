@@ -7,13 +7,13 @@ from src.aggregation import MeanPooling
 from src.prompting import MPVRPrompts, TemplatePrompts
 from src.sampling import UniformSampler
 from src.utils.constants import MODEL_RESULTS_CSV, MPVR_CLASS_DESC_JSON
-from src.utils.dataset import UCF101SubsetDataset
+from src.utils.dataset import VideoDataset
 from src.video_classifier import classify_videos
 
 
 def run_experiments():
-    dataset = UCF101SubsetDataset()
-    classes = sorted(dataset.df["label"].unique().tolist())
+    dataset = VideoDataset()
+    classes = dataset.get_classes()
     num_videos = len(dataset)
 
     samplers = [UniformSampler(64)]

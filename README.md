@@ -72,3 +72,16 @@ This project adapts parts of the implementations of some ZSAR algorithms. Below 
   year={2021}
 }
 ```
+
+- The `/data/mpvr_descriptions.json` file contains class descriptions copied from the original MPVR paper.
+- Original source: https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json
+```bibtex
+@inproceedings{mirza2024meta,
+  title={Meta-prompting for automating zero-shot visual recognition with llms},
+  author={Mirza, M Jehanzeb and Karlinsky, Leonid and Lin, Wei and Doveh, Sivan and Micorek, Jakub and Kozinski, Mateusz and Kuehne, Hilde and Possegger, Horst},
+  booktitle={European Conference on Computer Vision},
+  pages={370--387},
+  year={2024},
+  organization={Springer}
+}
+```

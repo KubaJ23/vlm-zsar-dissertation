@@ -59,6 +59,9 @@ class TemplatePrompts(ClassPrompter):
         return self.class_to_embedding
 
 
+# Adapted from the MPVR implementation:
+# https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json
+# Full citation is provided in the project README.
 class MPVRPrompts(ClassPrompter):
     """Generates text embeddings for each class using MPVR-style descriptions from a JSON file."""
 

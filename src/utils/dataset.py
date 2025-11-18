@@ -7,7 +7,7 @@ import torch
 from src.utils.constants import TEST_CSV, UCF101_EMBEDDINGS_DIR, UCF101_VIDEOS_DIR
 
 
-class UCF101SubsetDataset:
+class VideoDataset:
     """
     Dataset class to manage video files and their corresponding
     pre-computed frame embeddings.
@@ -23,6 +23,9 @@ class UCF101SubsetDataset:
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")
 
         self.df = pd.read_csv(csv_path)
+
+    def get_classes(self) -> list[str]:
+        return sorted(self.df["label"].unique().tolist())
 
     def get_embeddings(self, video_index: int) -> torch.Tensor:
         """
