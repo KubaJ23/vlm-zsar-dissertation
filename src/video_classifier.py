@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import torch
-import torch.nn.functional as F
-from tqdm import tqdm
+import torch.nn.functional as functional
 
 from src.aggregation import Aggregator
 from src.prompting import ClassPrompter
@@ -8,42 +9,70 @@ from src.sampling import Sampler
 from src.utils import clip
 
 
-def classify_videos(
-    pipeline: tuple[Sampler, Aggregator, ClassPrompter],
-    video_embeddings: list[torch.Tensor],
-    classes: list[str],
-):
-    sampler = pipeline[0]
-    aggregator = pipeline[1]
-    prompter = pipeline[2]
+class VideoClassifier:
+    def __init__(
+        self,
+        classes: list[str],
+    ):
+        self.classes = classes
+        self.set_sampler(None)
+        self.set_aggregator(None)
+        self.set_prompter(None)
 
-    class_to_text_embedding = prompter.get_prompt_embeddings()
+    def set_sampler(self, sampler: Sampler) -> "VideoClassifier":
+        self.sampler = sampler
+        return self
 
-    text_embeddings = torch.stack([class_to_text_embedding[cls] for cls in classes]).to(
-        clip.DEVICE
-    )
+    def set_aggregator(self, aggregator: Aggregator) -> "VideoClassifier":
+        self.aggregator = aggregator
+        return self
 
-    # Normalize text embeddings for cosine similarity
-    text_embeddings = F.normalize(text_embeddings, p=2, dim=-1)
+    def set_prompter(self, prompter: ClassPrompter) -> "VideoClassifier":
+        self.prompter = prompter
+        return self
 
-    predictions = []
+    def classify(
+        self,
+        video_path: Path,
+        frame_embeddings: torch.Tensor,
+    ) -> str:
+        class_to_text_embedding = self.prompter.get_prompt_embeddings_map()
 
-    with torch.no_grad():
-        for frame_embeddings in video_embeddings:
+        text_embeddings = torch.stack(
+            [class_to_text_embedding[cls] for cls in self.classes]
+        ).to(clip.DEVICE)
+
+        # Normalize text embeddings for cosine similarity
+        text_embeddings = functional.normalize(text_embeddings, p=2, dim=-1)
+
+        with torch.no_grad():
             frame_embeddings = frame_embeddings.to(clip.DEVICE)
 
-            sampled = sampler.sample(frame_embeddings)
+            selected_indexes = self.sampler.sample(video_path)
+
+            num_embeddings = frame_embeddings.shape[0]
+
+            if num_embeddings == 0:
+                raise ValueError("No frame embeddings available for the video.")
+
+            # Clamp every index to be at most (num_embeddings - 1)
+            selected_indexes = [
+                min(idx, num_embeddings - 1) for idx in selected_indexes
+            ]
+
+            sampled = frame_embeddings[selected_indexes]
+
             sampled = sampled.to(clip.DEVICE)
 
-            video_embedding = aggregator.aggregate(sampled)
+            video_embedding = self.aggregator.aggregate(sampled)
 
-            video_embedding = F.normalize(video_embedding.to(clip.DEVICE), p=2, dim=-1)
+            video_embedding = functional.normalize(
+                video_embedding.to(clip.DEVICE), p=2, dim=-1
+            )
 
             # Calculate cosine similarity to get a tensor of similarities between the video and each class
             similarities = video_embedding @ text_embeddings.T
 
-            predicted_label = classes[similarities.argmax().item()]
+            predicted_label = self.classes[similarities.argmax().item()]
 
-            predictions.append(predicted_label)
-
-    return predictions
+            return predicted_label

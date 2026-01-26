@@ -19,6 +19,11 @@ Activate the environment:
 conda activate zsar_project
 ```
 
+Run a Script (must have activated environment + currently in root directory)
+```bash
+python -m scripts.02_run_tests
+```
+
 Update environment to match environment.yml:
 ```bash
 conda env update --name zsar_project --file environment.yml --prune
@@ -69,6 +74,17 @@ This project adapts parts of the implementations of some ZSAR algorithms. Below 
   title={Actionclip: A new paradigm for video action recognition},
   author={Wang, Mengmeng and Xing, Jiazheng and Liu, Yong},
   journal={arXiv preprint arXiv:2109.08472},
+  year={2021}
+}
+```
+
+- Original source: https://github.com/MCG-NJU/MGSampler/tree/main
+```bibtex
+@inproceedings{zhi2021mgsampler,
+  title={Mgsampler: An explainable sampling strategy for video action recognition},
+  author={Zhi, Yuan and Tong, Zhan and Wang, Limin and Wu, Gangshan},
+  booktitle={Proceedings of the IEEE/CVF International conference on Computer Vision},
+  pages={1513--1522},
   year={2021}
 }
 ```

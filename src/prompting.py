@@ -10,7 +10,7 @@ from src.utils import clip
 
 class ClassPrompter(ABC):
     @abstractmethod
-    def get_prompt_embeddings(self) -> dict[str, torch.Tensor]:
+    def get_prompt_embeddings_map(self) -> dict[str, torch.Tensor]:
         pass
 
 
@@ -55,7 +55,7 @@ class TemplatePrompts(ClassPrompter):
                 class_to_embedding[cls] = mean_embedding
         self.class_to_embedding = class_to_embedding
 
-    def get_prompt_embeddings(self) -> dict[str, torch.Tensor]:
+    def get_prompt_embeddings_map(self) -> dict[str, torch.Tensor]:
         return self.class_to_embedding
 
 
@@ -93,5 +93,5 @@ class MPVRPrompts(ClassPrompter):
                 embeddings = clip.model.get_text_features(**texts)
                 self.class_to_embedding[cls] = embeddings.mean(dim=0)
 
-    def get_prompt_embeddings(self) -> dict[str, torch.Tensor]:
+    def get_prompt_embeddings_map(self) -> dict[str, torch.Tensor]:
         return self.class_to_embedding

@@ -5,10 +5,10 @@ from tqdm import tqdm
 
 from src.aggregation import MeanPooling
 from src.prompting import MPVRPrompts, TemplatePrompts
-from src.sampling import UniformSampler
+from src.sampling import MotionGuidedSampler, UniformSampler
 from src.utils.constants import MODEL_RESULTS_CSV, MPVR_CLASS_DESC_JSON
 from src.utils.dataset import VideoDataset
-from src.video_classifier import classify_videos
+from src.video_classifier import VideoClassifier
 
 
 def run_experiments():
@@ -16,10 +16,8 @@ def run_experiments():
     classes = dataset.get_classes()
     num_videos = len(dataset)
 
-    samplers = [UniformSampler(64)]
-
+    samplers = [UniformSampler(16), MotionGuidedSampler(16)]
     aggregators = [MeanPooling()]
-
     prompters = [TemplatePrompts(classes), MPVRPrompts(classes, MPVR_CLASS_DESC_JSON)]
 
     # Produce all pipeline combinations
@@ -33,21 +31,26 @@ def run_experiments():
 
     df = dataset.df.copy()
 
+    video_classifier = VideoClassifier(classes)
+
     for sampler, aggregator, prompter in tqdm(
         pipeline_combos, desc="Running experiments"
     ):
-        pipeline = (sampler, aggregator, prompter)
-
         pipeline_name = f"{sampler.name}_{aggregator.name}_{prompter.name}"
 
-        with torch.no_grad():
-            predictions = classify_videos(
-                pipeline=pipeline,
-                video_embeddings=video_embeddings,
-                classes=classes,
+        df[pipeline_name] = None
+
+        video_classifier.set_sampler(sampler)
+        video_classifier.set_aggregator(aggregator)
+        video_classifier.set_prompter(prompter)
+
+        for i in tqdm(range(num_videos), desc=f"Running {pipeline_name}", leave=False):
+            prediction = video_classifier.classify(
+                video_path=dataset.get_video_path(i),
+                frame_embeddings=video_embeddings[i],
             )
 
-        df[pipeline_name] = predictions
+            df.at[i, pipeline_name] = prediction
 
     df.to_csv(MODEL_RESULTS_CSV, index=False)
     print(f"\nAll results saved to {MODEL_RESULTS_CSV}")
