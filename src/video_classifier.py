@@ -34,8 +34,10 @@ class VideoClassifier:
     def classify(
         self,
         video_path: Path,
-        frame_embeddings: torch.Tensor,
+        frame_embeddings: torch.Tensor = None,
     ) -> str:
+        if not frame_embeddings:
+            frame_embeddings = clip.extract_frame_embeddings(video_path)
         class_to_text_embedding = self.prompter.get_prompt_embeddings_map()
 
         text_embeddings = torch.stack(
@@ -64,7 +66,9 @@ class VideoClassifier:
 
             sampled = sampled.to(clip.DEVICE)
 
-            video_embedding = self.aggregator.aggregate(sampled)
+            video_embedding = self.aggregator.aggregate(
+                sampled, text_embeddings=text_embeddings
+            )
 
             video_embedding = functional.normalize(
                 video_embedding.to(clip.DEVICE), p=2, dim=-1

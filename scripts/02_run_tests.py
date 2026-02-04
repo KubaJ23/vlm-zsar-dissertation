@@ -3,7 +3,7 @@ from itertools import product
 import torch
 from tqdm import tqdm
 
-from src.aggregation import MeanPooling
+from src.aggregation import MeanPooling, QueryScoringAggregator
 from src.prompting import MPVRPrompts, TemplatePrompts
 from src.sampling import MotionGuidedSampler, UniformSampler
 from src.utils.constants import MODEL_RESULTS_CSV, MPVR_CLASS_DESC_JSON
@@ -16,9 +16,13 @@ def run_experiments():
     classes = dataset.get_classes()
     num_videos = len(dataset)
 
-    samplers = [UniformSampler(16), MotionGuidedSampler(16)]
-    aggregators = [MeanPooling()]
-    prompters = [TemplatePrompts(classes), MPVRPrompts(classes, MPVR_CLASS_DESC_JSON)]
+    # samplers = [UniformSampler(16), MotionGuidedSampler(16)]
+    # aggregators = [MeanPooling(), QueryScoringAggregator()]
+    # prompters = [TemplatePrompts(classes), MPVRPrompts(classes, MPVR_CLASS_DESC_JSON)]
+
+    samplers = [UniformSampler(120)]
+    aggregators = [MeanPooling(), QueryScoringAggregator()]
+    prompters = [TemplatePrompts(classes)]
 
     # Produce all pipeline combinations
     pipeline_combos = list(product(samplers, aggregators, prompters))
