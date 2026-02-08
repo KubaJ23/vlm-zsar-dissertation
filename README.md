@@ -21,7 +21,7 @@ conda activate zsar_project
 
 Run a Script (must have activated environment + currently in root directory)
 ```bash
-python -m scripts.02_run_tests
+python -m scripts.SCRIPT_NAME
 ```
 
 Update environment to match environment.yml:
@@ -86,6 +86,16 @@ This project adapts parts of the implementations of some ZSAR algorithms. Below 
   booktitle={Proceedings of the IEEE/CVF International conference on Computer Vision},
   pages={1513--1522},
   year={2021}
+}
+```
+
+- Original source: https://github.com/m-bain/clip-hitchhiker
+```bibtex
+@article{bain2022clip,
+  title={A clip-hitchhiker's guide to long video retrieval},
+  author={Bain, Max and Nagrani, Arsha and Varol, G{\"u}l and Zisserman, Andrew},
+  journal={arXiv preprint arXiv:2205.08508},
+  year={2022}
 }
 ```
 

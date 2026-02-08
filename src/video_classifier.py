@@ -35,8 +35,12 @@ class VideoClassifier:
         self,
         video_path: Path,
         frame_embeddings: torch.Tensor = None,
-    ) -> str:
-        if not frame_embeddings:
+    ) -> torch.Tensor:
+        """
+        Classifies the given video into one of the classes given to the constructor. Returns a tensor of probabilities shape (num_classes,).
+        """
+        if frame_embeddings is None:
+            print("Extracting frame embeddings for video:", video_path)
             frame_embeddings = clip.extract_frame_embeddings(video_path)
         class_to_text_embedding = self.prompter.get_prompt_embeddings_map()
 
@@ -49,9 +53,7 @@ class VideoClassifier:
 
         with torch.no_grad():
             frame_embeddings = frame_embeddings.to(clip.DEVICE)
-
             selected_indexes = self.sampler.sample(video_path)
-
             num_embeddings = frame_embeddings.shape[0]
 
             if num_embeddings == 0:
@@ -63,20 +65,10 @@ class VideoClassifier:
             ]
 
             sampled = frame_embeddings[selected_indexes]
-
             sampled = sampled.to(clip.DEVICE)
 
-            video_embedding = self.aggregator.aggregate(
+            probabilities = self.aggregator.aggregate(
                 sampled, text_embeddings=text_embeddings
             )
 
-            video_embedding = functional.normalize(
-                video_embedding.to(clip.DEVICE), p=2, dim=-1
-            )
-
-            # Calculate cosine similarity to get a tensor of similarities between the video and each class
-            similarities = video_embedding @ text_embeddings.T
-
-            predicted_label = self.classes[similarities.argmax().item()]
-
-            return predicted_label
+            return probabilities
