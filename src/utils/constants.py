@@ -15,5 +15,3 @@ MPVR_CLASS_DESC_JSON = DATA_DIR / "mpvr_descriptions.json"
 
 # Results Paths
 RESULTS_DIR = PROJECT_ROOT / "results"
-
-MODEL_RESULTS_CSV = RESULTS_DIR / "test_results.csv"
