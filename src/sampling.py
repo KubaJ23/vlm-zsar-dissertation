@@ -3,9 +3,11 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 import cv2
+import decord
 import imageio
 import numpy as np
 import torch
+from decord import VideoReader, cpu
 
 # Handle MGSampler dependency: 'compare_ssim' was moved in newer scikit-image versions.
 # We map it here so the original MGSampler logic works without changes.
@@ -68,7 +70,16 @@ class UniformSampler(Sampler):
 # Adapted from the MGSampler implementation:
 # https://github.com/MCG-NJU/MGSampler/tree/main
 # Full citation is provided in the project README.
+
+
+# Optimisations made:
+# - limiting resolution of video frames for the motion salience calculations
+# - using decord for faster video reading
+# - using numpy's built in cumulative sum method.
+# - cache the motion salience scores for already processed videos
 class MotionGuidedSampler(Sampler):
+    _cache = {}  # Static variable so all MGsampler instances can use cache to avoid recomputation.
+
     def __init__(self, num_samples: int, test_mode: bool = True):
         self.num_samples = num_samples
         self.test_mode = test_mode
@@ -76,26 +87,33 @@ class MotionGuidedSampler(Sampler):
 
     def _get_img_diff(self, video_path):
         """
-        Direct implementation of the logic from MGSampler's file `generate_img_diff.py`
+        Implementation of the logic from MGSampler's file `generate_img_diff.py` (though slightly more optimised to reduce experiment runtimes)
         """
-        img = []
         diff_scores = []
-
         try:
-            vid = imageio.get_reader(str(video_path), "ffmpeg")
-            for num, im in enumerate(vid):
-                img.append(im)
+            vr = VideoReader(str(video_path), ctx=cpu(0))
+            num_frames = len(vr)
 
-            if len(img) < 2:
+            if num_frames < 2:
                 return []
 
-            for i in range(len(img) - 1):
-                tmp1 = cv2.cvtColor(img[i], cv2.COLOR_RGB2GRAY)
-                tmp2 = cv2.cvtColor(img[i + 1], cv2.COLOR_RGB2GRAY)
+            # reduce resolution to speed up the calculations (high resolution not necessary for detecting motion salience)
+            target_size = (224, 224)
 
-                (score, diff) = compare_ssim(tmp1, tmp2, full=True)
-                score = 1 - score
-                diff_scores.append(score)
+            prev_gray = cv2.resize(
+                cv2.cvtColor(vr[0].asnumpy(), cv2.COLOR_RGB2GRAY), target_size
+            )
+
+            for i in range(1, num_frames):
+                curr_gray = cv2.resize(
+                    cv2.cvtColor(vr[i].asnumpy(), cv2.COLOR_RGB2GRAY), target_size
+                )
+
+                # get the SSIM score between the frames
+                (score, _) = compare_ssim(prev_gray, curr_gray, full=True)
+                diff_scores.append(1.0 - score)
+
+                prev_gray = curr_gray
 
         except Exception as e:
             print(f"Error processing video {video_path}: {e}")
@@ -105,31 +123,32 @@ class MotionGuidedSampler(Sampler):
 
     def sample(self, video_path: Path) -> list[int]:
         """
-        Direct implementation of the logic from MGSampler's file `loading.py` (SampleFrames class)
+        Implementation of the logic from MGSampler's file `loading.py` (SampleFrames class)
         """
-        # calculate motion scores (simulating loading 'img_diff' from JSON)
-        diff_scores = self._get_img_diff(video_path)
+        # calculate motion scores
+        # diff_scores = self._get_img_diff(video_path)
+
+        video_key = str(video_path)
+
+        if video_key in MotionGuidedSampler._cache:
+            diff_scores = MotionGuidedSampler._cache[video_key]
+        else:
+            diff_scores = self._get_img_diff(video_path)
+            MotionGuidedSampler._cache[video_key] = diff_scores
 
         if not diff_scores:
             raise ValueError("No frame differences available for the video.")
 
         # process scores, quare root and normalization from `loading.py`
-        diff_scores = np.array(diff_scores)
-        diff_scores = np.power(diff_scores, 0.5)
+        diff_scores = np.power(np.array(diff_scores), 0.5)
         diff_sum = np.sum(diff_scores)
 
-        # check for division by zero
         if diff_sum == 0:
             diff_scores = np.ones_like(diff_scores) / len(diff_scores)
         else:
             diff_scores = diff_scores / diff_sum
 
-        # Accumulate scores (Cumulative Distribution Function)
-        count = 0
-        pic_diff = []
-        for i in range(len(diff_scores)):
-            count = count + diff_scores[i]
-            pic_diff.append(count)
+        pic_diff = np.cumsum(diff_scores)
 
         # helper function from `loading.py`
         def find_nearest(array, value):
@@ -143,7 +162,7 @@ class MotionGuidedSampler(Sampler):
         choose_index = []
 
         # select indices based on distribution
-        # original code hardcoded loops for 16 clips, now it uses `self.num_samples` to be more general
+        # original code hardcoded loops for 16 clips, now I use `self.num_samples` to be more general
         # while keeping the mathematical logic (center sampling vs random bin sampling).
 
         step = 1.0 / self.num_samples

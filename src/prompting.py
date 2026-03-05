@@ -6,6 +6,7 @@ import torch
 from tqdm import tqdm
 
 from src.utils import clip
+from src.utils.constants import MPVR_CLASS_DESC_JSON
 
 
 class ClassPrompter(ABC):
@@ -76,9 +77,16 @@ class MPVRPrompts(ClassPrompter):
             original_data = json.load(f)
 
         descriptions_data = {}
-        for class_name, descriptions in original_data.items():
-            processed_key = class_name.title().replace(" ", "")
-            descriptions_data[processed_key] = descriptions
+
+        # Only if the class descriptions file is for the UCF101 dataset,
+        # we need to ensure that the class names from the description file match
+        # the class names in the labels of the UCF101 CSV file with the labels (answers)
+        if descriptions_path == MPVR_CLASS_DESC_JSON:
+            for class_name, descriptions in original_data.items():
+                processed_key = class_name.title().replace(" ", "")
+                descriptions_data[processed_key] = descriptions
+        else:
+            descriptions_data = original_data
 
         for cls in tqdm(classes, desc="Generating MPVR embeddings"):
             descriptions = descriptions_data.get(cls)

@@ -1,10 +1,9 @@
+from abc import ABC
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import torch
-
-from src.utils.constants import TEST_CSV, UCF101_EMBEDDINGS_DIR, UCF101_VIDEOS_DIR
 
 
 class VideoDataset:
@@ -13,11 +12,9 @@ class VideoDataset:
     pre-computed frame embeddings.
     """
 
-    def __init__(self):
-        self.embeddings_root = UCF101_EMBEDDINGS_DIR
-        self.videos_root = UCF101_VIDEOS_DIR
-
-        csv_path = TEST_CSV
+    def __init__(self, embeddings_root: Path, videos_root: Path, csv_path: Path):
+        self.embeddings_root = embeddings_root
+        self.videos_root = videos_root
 
         if not csv_path.exists():
             raise FileNotFoundError(f"CSV file not found at: {csv_path}")
@@ -43,16 +40,14 @@ class VideoDataset:
 
         full_embeddings_path = self.embeddings_root / embeddings_relative_path
 
-        # Check if the embeddings are stored as a NumPy array first, then check if they're a PyTorch tensor
+        # Check if the embeddings are stored as a NumPy array or a PyTorch tensor
         npy_path = full_embeddings_path.with_suffix(".npy")
         pt_path = full_embeddings_path.with_suffix(".pt")
 
         if npy_path.exists():
-            # Load NumPy array and convert to PyTorch tensor
             array = np.load(npy_path)
             return torch.from_numpy(array)
         elif pt_path.exists():
-            # Load PyTorch tensor directly
             return torch.load(pt_path)
         else:
             raise FileNotFoundError(
@@ -66,7 +61,7 @@ class VideoDataset:
             raise IndexError("video_index out of range")
 
         row = self.df.iloc[video_index]
-        video_relative_path = Path(row["clip_path"].strip("/")).with_suffix(".avi")
+        video_relative_path = Path(str(row["clip_path"]).strip("/"))
         video_path = self.videos_root / video_relative_path
 
         if not video_path.exists():

@@ -24,7 +24,7 @@ def compute_frame_embeddings(
     Takes a list of RGB frames (numpy arrays) and returns their CLIP embeddings.
     """
     if not frames:
-        return torch.empty(0)
+        return None
 
     all_embeddings = []
 
@@ -43,7 +43,7 @@ def compute_frame_embeddings(
             all_embeddings.append(feats.cpu())
 
     if not all_embeddings:
-        return torch.empty(0)
+        return None
 
     return torch.cat(all_embeddings, dim=0)
 
@@ -51,13 +51,15 @@ def compute_frame_embeddings(
 def get_video_embeddings(video_path: Path, batch_size: int = 32) -> torch.Tensor:
     """
     Reads a video file, extracts all frames, and computes the all frame embeddings.
+
+    Will return None if the video cannot be read or if no frames are found.
     """
     frames = []
     cap = cv2.VideoCapture(str(video_path))
 
     if not cap.isOpened():
         print(f"Warning: Could not open video {video_path}")
-        return torch.empty(0)
+        return None
 
     while True:
         ret, frame = cap.read()
@@ -70,7 +72,7 @@ def get_video_embeddings(video_path: Path, batch_size: int = 32) -> torch.Tensor
 
     if not frames:
         print(f"Warning: No frames found in {video_path}")
-        return torch.empty(0)
+        return None
 
     return compute_frame_embeddings(frames, batch_size=batch_size)
 

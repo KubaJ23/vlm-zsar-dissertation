@@ -38,10 +38,16 @@ class VideoClassifier:
     ) -> torch.Tensor:
         """
         Classifies the given video into one of the classes given to the constructor. Returns a tensor of probabilities shape (num_classes,).
+
+        Raises ValueError if frame embeddings were not precomputed and the embeddings were unable to be computed during classification.
         """
         if frame_embeddings is None:
             print("Extracting frame embeddings for video:", video_path)
-            frame_embeddings = clip.extract_frame_embeddings(video_path)
+            frame_embeddings = clip.get_video_embeddings(video_path)
+            if frame_embeddings is None:
+                raise ValueError(
+                    f"Could not extract frame embeddings for video: {video_path}"
+                )
         class_to_text_embedding = self.prompter.get_prompt_embeddings_map()
 
         text_embeddings = torch.stack(

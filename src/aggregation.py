@@ -42,7 +42,8 @@ class MeanPooling(Aggregator):
 
         # Calculate similarities and convert to probabilities
         sims = torch.matmul(v_norm, t_norm.t()).squeeze(0)
-        return torch.softmax(sims, dim=0)
+        prediction_temp = 0.01
+        return torch.softmax(sims / prediction_temp, dim=0)
 
 
 # Adapted from the "A CLIP-Hitchhiker’s Guide to Long Video Retrieval" implementation:
@@ -93,4 +94,5 @@ class QueryScoringAggregator(Aggregator):
         sims = torch.einsum("a d, a b d -> a b", t_norm_embeds, vid_embed_final_norm)
         self.class_similarities = sims[:, 0]
 
-        return torch.softmax(self.class_similarities, dim=0)
+        prediction_temp = 0.01
+        return torch.softmax(self.class_similarities / prediction_temp, dim=0)
