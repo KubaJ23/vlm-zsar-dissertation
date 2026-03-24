@@ -50,7 +50,7 @@ def calculate_ece(
     y_true: np.ndarray, probs: np.ndarray, class_cols: list, n_bins=10
 ) -> float:
     """
-    Calculates Expected Calibration Error (ECE) for multiclass.
+    Calculates Expected Calibration Error (ECE).
     Lower is better. Perfect calibration = 0.0.
     """
     # Get confidence (max prob) and prediction (argmax)

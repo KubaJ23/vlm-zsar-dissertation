@@ -45,17 +45,15 @@ def run_experiments():
 
     samplers = [
         UniformSampler(16),
-        MotionGuidedSampler(16),
-        UniformSampler(120),
-        MotionGuidedSampler(120),
+        # MotionGuidedSampler(16),
     ]
     aggregators = [
-        MeanPooling(),
+        # MeanPooling(),
         QueryScoringAggregator(),
     ]
     prompters = [
         TemplatePrompts(classes),
-        MPVRPrompts(classes, MPVR_ACTIVITYNET_CLASS_DESC_JSON),
+        # MPVRPrompts(classes, MPVR_ACTIVITYNET_CLASS_DESC_JSON),
     ]
 
     # TODO Create matrix for the best method
@@ -70,7 +68,25 @@ def run_experiments():
     # Processing times for each pipeline (seconds) (ActivityNet): {'UniformSampler120_MeanPooling_TemplatePrompts': 88.68463039398193, 'UniformSampler120_MeanPooling_MPVRPrompts': 72.75543022155762, 'UniformSampler120_QueryScoringAggregator_TemplatePrompts': 87.4105179309845, 'UniformSampler120_QueryScoringAggregator_MPVRPrompts': 88.80076336860657, 'MGSampler120_MeanPooling_TemplatePrompts': 13547.717323064804, 'MGSampler120_MeanPooling_MPVRPrompts': 59.096999406814575, 'MGSampler120_QueryScoringAggregator_TemplatePrompts': 63.71704649925232, 'MGSampler120_QueryScoringAggregator_MPVRPrompts': 63.52103877067566}
     # UCF101 Processing times for each pipeline (seconds): {'MGSampler1_MeanPooling_TemplatePrompts': 2686.7785692214966, 'MGSampler2_MeanPooling_TemplatePrompts': 86.50166296958923, 'MGSampler4_MeanPooling_TemplatePrompts': 85.78026056289673, 'MGSampler8_MeanPooling_TemplatePrompts': 85.98095679283142, 'MGSampler16_MeanPooling_TemplatePrompts': 86.34726309776306, 'MGSampler32_MeanPooling_TemplatePrompts': 86.63276052474976, 'MGSampler64_MeanPooling_TemplatePrompts': 86.33498358726501, 'MGSampler128_MeanPooling_TemplatePrompts': 88.18419122695923}
     # activitynet Processing times for each pipeline (seconds): {'MGSampler1_MeanPooling_TemplatePrompts': 14968.512595891953, 'MGSampler2_MeanPooling_TemplatePrompts': 57.87101864814758, 'MGSampler4_MeanPooling_TemplatePrompts': 58.191577672958374, 'MGSampler8_MeanPooling_TemplatePrompts': 56.745466470718384, 'MGSampler16_MeanPooling_TemplatePrompts': 57.0536322593689, 'MGSampler32_MeanPooling_TemplatePrompts': 60.145596504211426, 'MGSampler64_MeanPooling_TemplatePrompts': 63.78253149986267, 'MGSampler128_MeanPooling_TemplatePrompts': 62.12326240539551, 'UniformSampler1_MeanPooling_TemplatePrompts': 91.17177510261536, 'UniformSampler2_MeanPooling_TemplatePrompts': 74.5673840045929, 'UniformSampler4_MeanPooling_TemplatePrompts': 74.64715814590454, 'UniformSampler8_MeanPooling_TemplatePrompts': 74.74318194389343, 'UniformSampler16_MeanPooling_TemplatePrompts': 71.71035242080688, 'UniformSampler32_MeanPooling_TemplatePrompts': 67.72666692733765, 'UniformSampler64_MeanPooling_TemplatePrompts': 68.92252779006958, 'UniformSampler128_MeanPooling_TemplatePrompts': 82.02165246009827}
-    # activitynet Processing times for each pipeline (seconds): {'UniformSampler16_MeanPooling_TemplatePrompts': 70.34243988990784, 'UniformSampler16_MeanPooling_MPVRPrompts': 59.461488246917725, 'UniformSampler16_QueryScoringAggregator_TemplatePrompts': 60.39933371543884, 'UniformSampler16_QueryScoringAggregator_MPVRPrompts': 60.199368953704834, 'MGSampler16_MeanPooling_TemplatePrompts': 13936.429725885391, 'MGSampler16_MeanPooling_MPVRPrompts': 103.70175337791443, 'MGSampler16_QueryScoringAggregator_TemplatePrompts': 63.031410932540894, 'MGSampler16_QueryScoringAggregator_MPVRPrompts': 61.86304330825806, 'UniformSampler120_MeanPooling_TemplatePrompts': 86.4507966041565, 'UniformSampler120_MeanPooling_MPVRPrompts': 75.63450169563293, 'UniformSampler120_QueryScoringAggregator_TemplatePrompts': 92.67772245407104, 'UniformSampler120_QueryScoringAggregator_MPVRPrompts': 91.24755549430847, 'MGSampler120_MeanPooling_TemplatePrompts': 61.02518820762634, 'MGSampler120_MeanPooling_MPVRPrompts': 60.92303466796875, 'MGSampler120_QueryScoringAggregator_TemplatePrompts': 89.68481278419495, 'MGSampler120_QueryScoringAggregator_MPVRPrompts': 126.48594522476196}
+
+    # activitynet Processing times for each pipeline (seconds): {
+    # 'UniformSampler16_MeanPooling_TemplatePrompts': 70.34243988990784,
+    # 'UniformSampler16_MeanPooling_MPVRPrompts': 59.461488246917725,
+    # 'UniformSampler16_QueryScoringAggregator_TemplatePrompts': 60.39933371543884,
+    # 'UniformSampler16_QueryScoringAggregator_MPVRPrompts': 60.199368953704834,
+    # 'MGSampler16_MeanPooling_TemplatePrompts': 13936.429725885391,
+    # 'MGSampler16_MeanPooling_MPVRPrompts': 103.70175337791443,
+    # 'MGSampler16_QueryScoringAggregator_TemplatePrompts': 63.031410932540894,
+    # 'MGSampler16_QueryScoringAggregator_MPVRPrompts': 61.86304330825806,
+    #
+    # 'UniformSampler120_MeanPooling_TemplatePrompts': 86.4507966041565,
+    # 'UniformSampler120_MeanPooling_MPVRPrompts': 75.63450169563293,
+    # 'UniformSampler120_QueryScoringAggregator_TemplatePrompts': 92.67772245407104,
+    # 'UniformSampler120_QueryScoringAggregator_MPVRPrompts': 91.24755549430847,
+    # 'MGSampler120_MeanPooling_TemplatePrompts': 61.02518820762634,
+    # 'MGSampler120_MeanPooling_MPVRPrompts': 60.92303466796875,
+    # 'MGSampler120_QueryScoringAggregator_TemplatePrompts': 89.68481278419495,
+    # 'MGSampler120_QueryScoringAggregator_MPVRPrompts': 126.48594522476196}
 
     # Use ranking to compare models, compare models on mAP
     # AUC calculations

@@ -43,11 +43,11 @@ dependencies:
   - brotli-python=1.2.0=py310h8abc2a3_0
   - bzip2=1.0.8=h0ad9c76_8
   - c-ares=1.34.5=h2466b09_0
-  - ca-certificates=2025.11.12=h4c7d964_0
+  - ca-certificates=2026.1.4=h4c7d964_0
   - cached-property=1.5.2=hd8ed1ab_1
   - cached_property=1.5.2=pyha770c72_1
   - cairo=1.18.4=h5782bbf_0
-  - certifi=2025.11.12=pyhd8ed1ab_0
+  - certifi=2026.1.4=pyhd8ed1ab_0
   - cffi=2.0.0=py310h29418f3_1
   - charset-normalizer=3.4.4=pyhd8ed1ab_0
   - colorama=0.4.6=pyhd8ed1ab_1
@@ -259,7 +259,7 @@ dependencies:
   - openh264=2.6.0=hb17fa0b_0
   - openjpeg=2.5.4=h24db6dd_0
   - openjph=0.25.2=hf13a347_0
-  - openssl=3.6.0=h725018a_0
+  - openssl=3.6.1=hf411b9b_1
   - orc=2.2.1=h7414dfc_0
   - overrides=7.7.0=pyhd8ed1ab_1
   - packaging=25.0=pyh29332c3_1
@@ -319,6 +319,7 @@ dependencies:
   - safetensors=0.6.2=py310hf13f778_2
   - scikit-image=0.25.2=py310hed136d8_2
   - scikit-learn=1.7.2=py310h21054b0_0
+  - scikit-posthocs=0.11.4=pyhd8ed1ab_0
   - scipy=1.15.2=py310h15c175c_0
   - sdl2=2.32.56=h5112557_0
   - sdl3=3.2.26=h5112557_0
@@ -379,9 +380,77 @@ dependencies:
   - zstandard=0.25.0=py310h1637853_1
   - zstd=1.5.7=hbeecb71_2
   - pip:
+      - aiofiles==25.1.0
+      - annotated-types==0.7.0
+      - argcomplete==3.6.3
+      - autorank==1.3.0
+      - backports-zstd==1.3.0
+      - baycomp==1.0.3
+      - bcrypt==5.0.0
+      - boto3==1.42.48
+      - botocore==1.42.48
+      - cachetools==7.0.1
+      - cross-web==0.4.1
+      - cryptography==46.0.5
+      - dacite==1.9.2
+      - decord==0.6.0
+      - deprecated==1.3.1
+      - distro==1.9.0
+      - dnspython==2.8.0
+      - fiftyone==1.13.0
+      - fiftyone-brain==0.21.5
+      - fiftyone-db==1.4.1
+      - ftfy==6.3.1
+      - glob2==0.7
+      - graphql-core==3.2.7
+      - humanize==4.15.0
+      - hypercorn==0.18.0
       - imageio-ffmpeg==0.6.0
+      - inflate64==1.0.4
+      - jiter==0.13.0
+      - jmespath==1.1.0
+      - jsonlines==4.0.0
+      - jsonpatch==1.33
+      - mongoengine==0.29.1
+      - motor==3.6.1
+      - multivolumefile==0.2.3
+      - narwhals==2.16.0
+      - openai==0.28.0
+      - paramiko==3.5.1
+      - plotly==6.5.2
+      - pprintpp==0.4.0
+      - priority==2.0.0
+      - py7zr==1.1.0
+      - pybcj==1.0.7
+      - pycryptodomex==3.23.0
+      - pydantic==2.12.5
+      - pydantic-core==2.41.5
+      - pydash==8.0.6
+      - pymongo==4.9.2
+      - pynacl==1.6.2
+      - pyppmd==1.3.1
+      - rarfile==4.2
+      - retrying==1.4.2
+      - rtree==1.4.1
+      - s3transfer==0.16.0
+      - sortedcontainers==2.4.0
+      - sse-starlette==0.10.3
+      - sseclient-py==1.9.0
+      - starlette==0.52.1
+      - strawberry-graphql==0.291.3
       - sympy==1.13.1
+      - tabulate==0.9.0
+      - taskgroup==0.2.2
+      - texttable==1.7.0
       - torch==2.5.1+cu121
       - torchaudio==2.5.1+cu121
       - torchvision==0.20.1+cu121
+      - typing-inspection==0.4.2
+      - tzlocal==5.3.1
+      - universal-analytics-python3==1.1.1
+      - voxel51-eta==0.15.3
+      - wrapt==2.1.1
+      - wsproto==1.3.2
+      - xmltodict==1.0.2
+      - yt-dlp==2026.2.4
 prefix: C:\Users\kokos\anaconda3\envs\zsar_project

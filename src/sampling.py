@@ -148,7 +148,7 @@ class MotionGuidedSampler(Sampler):
         else:
             diff_scores = diff_scores / diff_sum
 
-        pic_diff = np.cumsum(diff_scores)
+        cumsum_diff = np.cumsum(diff_scores)
 
         # helper function from `loading.py`
         def find_nearest(array, value):
@@ -172,13 +172,15 @@ class MotionGuidedSampler(Sampler):
             half_step = step / 2.0
             for i in range(self.num_samples):
                 target_prob = half_step + (i * step)
-                choose_index.append(find_nearest(pic_diff, target_prob))
+                choose_index.append(find_nearest(cumsum_diff, target_prob))
         else:
             # sample randomly within each probability bin (stochastic)
             for i in range(self.num_samples):
                 start = i * step
                 end = (i + 1) * step
-                choose_index.append(find_nearest(pic_diff, random.uniform(start, end)))
+                choose_index.append(
+                    find_nearest(cumsum_diff, random.uniform(start, end))
+                )
 
         # clamp to valid range, should not be necessary but acts as a double check (total frames - 1)
         max_frame_idx = len(diff_scores)

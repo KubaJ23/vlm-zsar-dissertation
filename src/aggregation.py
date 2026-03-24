@@ -46,53 +46,60 @@ class MeanPooling(Aggregator):
         return torch.softmax(sims / prediction_temp, dim=0)
 
 
-# Adapted from the "A CLIP-Hitchhiker’s Guide to Long Video Retrieval" implementation:
+# Highly adapted from the "A CLIP-Hitchhiker’s Guide to Long Video Retrieval" implementation:
 # https://github.com/m-bain/clip-hitchhiker
 # Full citation is provided in the project README.
+# This integration removed the batching that was included in the original implementation as well as a different mechanism for matrix multiplication (original used torch.einsum which was difficult to understand and unclear).
 class QueryScoringAggregator(Aggregator):
     def __init__(self, temperature: float = 0.1, eps: float = 1e-8):
         self.name = "QueryScoringAggregator"
         self.temperature = temperature
         self.eps = eps
         self.class_similarities = None
+        self.saved_frame_weights = None
 
     def aggregate(
-        self, frame_embeddings: torch.Tensor, text_embeddings: torch.Tensor
+        self,
+        frame_embeddings: torch.Tensor,  # num_frames x embed_dim
+        text_embeddings: torch.Tensor,  # num_classes x embed_dim
     ) -> torch.Tensor:
         assert frame_embeddings.ndim == 2
         assert text_embeddings.ndim == 2
 
-        vid_embeds = frame_embeddings.unsqueeze(0)
+        # normalise text embeddings for cosine similarity
+        t_norm_embeds = F.normalize(text_embeddings, eps=self.eps)
 
-        # L2 normalisation
-        t_norm_embeds = text_embeddings / torch.max(
-            text_embeddings.norm(dim=1, keepdim=True),
-            self.eps * torch.ones(1, 1, device=text_embeddings.device),
-        )
-        vid_embeds_norm = vid_embeds / torch.max(
-            vid_embeds.norm(dim=2, keepdim=True),
-            self.eps * torch.ones(1, 1, device=vid_embeds.device),
-        )
+        # normalise video embeddings for cosine similarity
+        vid_embeds_norm = F.normalize(frame_embeddings, eps=self.eps)
 
-        # Text–frame similarity
-        sim_mt = torch.einsum("a d, b v d -> a b v", t_norm_embeds, vid_embeds_norm)
+        # calculate cosine similarity between frames and text embeddings
+        sim_mt = torch.matmul(t_norm_embeds, vid_embeds_norm.T)
 
-        # Query scores over frames
-        scores = torch.softmax(sim_mt / self.temperature, dim=2)
+        # turn similarities into probability weights (num_classes x num_frames)
+        scores = torch.softmax(sim_mt / self.temperature, dim=1)
 
-        # Weighted aggregation
-        vid_embed_final = torch.einsum(
-            "b v d, a b v -> a b v d", vid_embeds, scores
-        ).sum(dim=2)
+        # get weighted sum of frame embeddings into a single embedding per class (num_classes x embed_dim)
+        vid_embed_final = torch.matmul(scores, frame_embeddings)
 
-        # Normalise aggregated video embeddings
-        vid_embed_final_norm = vid_embed_final / torch.max(
-            vid_embed_final.norm(dim=2, keepdim=True),
-            self.eps * torch.ones(1, 1, device=vid_embed_final.device),
-        )
+        # normalise the new video embedding for each class
+        vid_embed_final_norm = F.normalize(vid_embed_final, eps=self.eps)
 
-        sims = torch.einsum("a d, a b d -> a b", t_norm_embeds, vid_embed_final_norm)
-        self.class_similarities = sims[:, 0]
+        # calculate similarity between text queries and the aggregated video vector (num_classes,1)
+        sims = (t_norm_embeds * vid_embed_final_norm).sum(dim=1)
+        self.class_similarities = sims
 
+        self.save_frame_weights_for_most_probable_class(self.class_similarities, scores)
+
+        # return final probabilities for each class
         prediction_temp = 0.01
         return torch.softmax(self.class_similarities / prediction_temp, dim=0)
+
+    def save_frame_weights_for_most_probable_class(self, class_similarities, scores):
+        """Saves frame weights for the most probable class for later analysis"""
+        # get index of most probable class
+        most_probable_class_idx = torch.argmax(class_similarities).item()
+
+        # get the frame weights for the most probable class
+        frame_weights = scores[most_probable_class_idx, :].cpu().numpy()
+
+        self.saved_frame_weights = frame_weights
