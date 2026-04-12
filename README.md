@@ -10,41 +10,48 @@ Follow these steps to setup and run scripts for this project. Notebooks can be r
 
 The code in this repository assumes there exists the `data` directory in the root. This contains the datasets, metadata, and precomputed embeddings used for running the experiments. The data folder is several GBs so it is not included with the project code.
 
-After downloading this repository, replace the empty, placeholder [data folder](./data/) with the actual data folder from [here](temp).
+After downloading this repository, replace the empty, placeholder [data folder](./data/) with the actual data folder from [OneDrive](<https://uniofnottm-my.sharepoint.com/:u:/g/personal/psykj2_nottingham_ac_uk/IQBg2SvM4vRwTYgict3E-sCRAYrgEQeh3xU3pnhcVmJ5vQw?e=0qD7Gm>) (download and extract `data.zip`).
 
 ### Install dependencies
 
 Initialise Conda (Windows):
+
 ```bash
 conda init cmd.exe
 ```
 
 Create the environment:
+
 ```bash
 conda env create -f environment.yml
 ```
 
 Activate the environment:
+
 ```bash
 conda activate zsar_project
 ```
 
 Run a Script (must have activated environment + currently in root directory)
+
 ```bash
 python -m scripts.SCRIPT_NAME
 ```
 
 Update environment to match environment.yml:
+
 ```bash
 conda env update --name zsar_project --file environment.yml --prune
 ```
 
 Export environment (optional, to update environment.yml):
+
 ```bash
 conda env export > environment.yml
 ```
 
 Deactivate when done:
+
 ```bash
 conda deactivate
 ```
@@ -61,12 +68,11 @@ The project organises code and files into these directories:
 ## Running Experiments
 
 To run an experiment with a specific pipeline configuration, follow these steps:
-- Define the sampler, aggregator or prompter class which inherit the appropriate `abstract base class` (ABC) in `/src`.
-- Add instances of the classes to the lists of samplers, aggregators, and prompters in the script `02_run_tests.py`.
-- Select your dataset by creating a `VideoDataset` object.
+
+- Define the sampler, aggregator or prompter class which inherit the appropriate `abstract base class` (ABC) in `/src`. These ABCs can be found in `/src/sampling.py`, `/src/aggregation.py`, and `/src/prompting.py`, where you can also You can also find the existing implementations for those pipeline components.
+- Add instances of the defined classes to the lists of samplers, aggregators, and prompters in the script `02_run_tests.py`.
+- Select your dataset by creating a `VideoDataset` object, as seen in the script `02_run_tests.py`
 - Run the script. A pipeline for each combination of those components will run and save the results to the `/results` directory.
-
-
 
 ## Dataset
 
@@ -75,31 +81,31 @@ This project uses the [UCF101 Action Recognition](https://www.kaggle.com/dataset
 Dataset paper citations:
 
 @article{soomro2012ucf101,
-  title={Ucf101: A dataset of 101 human actions classes from videos in the wild},
-  author={Soomro, Khurram and Zamir, Amir Roshan and Shah, Mubarak},
-  journal={arXiv preprint arXiv:1212.0402},
-  year={2012}
+title={Ucf101: A dataset of 101 human actions classes from videos in the wild},
+author={Soomro, Khurram and Zamir, Amir Roshan and Shah, Mubarak},
+journal={arXiv preprint arXiv:1212.0402},
+year={2012}
 }
 
 @inproceedings{caba2015activitynet,
-  title={Activitynet: A large-scale video benchmark for human activity understanding},
-  author={Caba Heilbron, Fabian and Escorcia, Victor and Ghanem, Bernard and Carlos Niebles, Juan},
-  booktitle={Proceedings of the ieee conference on computer vision and pattern recognition},
-  pages={961--970},
-  year={2015}
+title={Activitynet: A large-scale video benchmark for human activity understanding},
+author={Caba Heilbron, Fabian and Escorcia, Victor and Ghanem, Bernard and Carlos Niebles, Juan},
+booktitle={Proceedings of the ieee conference on computer vision and pattern recognition},
+pages={961--970},
+year={2015}
 }
 
 Dataset download link:
 
 @misc{jansen2022ucf101kaggle,
-  author={Matthew Jansen},
-  title={UCF101 - Action Recognition},
-  howpublished={\url{https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition}},
-  year={2022},
-  note={Accessed: 2025-11-05}
+author={Matthew Jansen},
+title={UCF101 - Action Recognition},
+howpublished={\url{<https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition}}>,
+year={2022},
+note={Accessed: 2025-11-05}
 }
 
-ActivityNet was downloaded using the FiftyOne tool as explained [here](http://activity-net.org/download.html).
+ActivityNet was downloaded using the [FiftyOne tool](http://activity-net.org/download.html).
 
 The precomputed embeddings, datasets, and metadata are stored in the `data` directory. Scripts were used to generate the embeddings for each dataset.
 
@@ -107,7 +113,8 @@ The precomputed embeddings, datasets, and metadata are stored in the `data` dire
 
 This project adapts parts of the implementations of some ZSAR algorithms. Below are citations to the sources of these implementations.
 
-- Original source: https://github.com/sallymmx/ActionCLIP
+- Original source: <https://github.com/sallymmx/ActionCLIP>
+
 ```bibtex
 @article{wang2021actionclip,
   title={Actionclip: A new paradigm for video action recognition},
@@ -117,7 +124,8 @@ This project adapts parts of the implementations of some ZSAR algorithms. Below 
 }
 ```
 
-- Original source: https://github.com/MCG-NJU/MGSampler/tree/main
+- Original source: <https://github.com/MCG-NJU/MGSampler/tree/main>
+
 ```bibtex
 @inproceedings{zhi2021mgsampler,
   title={Mgsampler: An explainable sampling strategy for video action recognition},
@@ -128,7 +136,8 @@ This project adapts parts of the implementations of some ZSAR algorithms. Below 
 }
 ```
 
-- Original source: https://github.com/m-bain/clip-hitchhiker
+- Original source: <https://github.com/m-bain/clip-hitchhiker>
+
 ```bibtex
 @article{bain2022clip,
   title={A clip-hitchhiker's guide to long video retrieval},
@@ -139,7 +148,8 @@ This project adapts parts of the implementations of some ZSAR algorithms. Below 
 ```
 
 - The `/data/mpvr_descriptions.json` file contains class descriptions copied from the original MPVR paper.
-- Original source: https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json
+- Original source: <https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json>
+
 ```bibtex
 @inproceedings{mirza2024meta,
   title={Meta-prompting for automating zero-shot visual recognition with llms},
