@@ -5,6 +5,7 @@ import pandas as pd
 
 from src.utils.constants import TEST_CSV
 
+#  only used for visualisation of ucf101 results in confusion matrix to group the classes
 ucf101_categories_camelcase = {
     "Body-Motion Only": [
         "BabyCrawling",

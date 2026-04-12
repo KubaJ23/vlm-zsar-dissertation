@@ -25,23 +25,19 @@ class MeanPooling(Aggregator):
         self.eps = eps
 
     def aggregate(
-        self, frame_embeddings: torch.Tensor, text_embeddings: torch.Tensor
+        self,
+        frame_embeddings: torch.Tensor,
+        text_embeddings: torch.Tensor,
     ) -> torch.Tensor:
         # Calculate the video representation
         vid_embed = frame_embeddings.mean(dim=0, keepdim=True)  # 1 x d
 
-        # L2 normalisation for cosine similarity
-        v_norm = vid_embed / torch.max(
-            vid_embed.norm(dim=1, keepdim=True),
-            self.eps * torch.ones(1, 1, device=vid_embed.device),
-        )
-        t_norm = text_embeddings / torch.max(
-            text_embeddings.norm(dim=1, keepdim=True),
-            self.eps * torch.ones(1, 1, device=text_embeddings.device),
-        )
+        # normalisation for cosine similarity
+        v_norm = F.normalize(vid_embed, eps=self.eps)
+        t_norm = F.normalize(text_embeddings, eps=self.eps)
 
         # Calculate similarities and convert to probabilities
-        sims = torch.matmul(v_norm, t_norm.t()).squeeze(0)
+        sims = (v_norm @ t_norm.T).squeeze(0)
         prediction_temp = 0.01
         return torch.softmax(sims / prediction_temp, dim=0)
 
@@ -73,13 +69,13 @@ class QueryScoringAggregator(Aggregator):
         vid_embeds_norm = F.normalize(frame_embeddings, eps=self.eps)
 
         # calculate cosine similarity between frames and text embeddings
-        sim_mt = torch.matmul(t_norm_embeds, vid_embeds_norm.T)
+        sim_mt = t_norm_embeds @ vid_embeds_norm.T
 
         # turn similarities into probability weights (num_classes x num_frames)
         scores = torch.softmax(sim_mt / self.temperature, dim=1)
 
         # get weighted sum of frame embeddings into a single embedding per class (num_classes x embed_dim)
-        vid_embed_final = torch.matmul(scores, frame_embeddings)
+        vid_embed_final = scores @ frame_embeddings
 
         # normalise the new video embedding for each class
         vid_embed_final_norm = F.normalize(vid_embed_final, eps=self.eps)

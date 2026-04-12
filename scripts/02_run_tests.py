@@ -48,12 +48,12 @@ def run_experiments():
         # MotionGuidedSampler(16),
     ]
     aggregators = [
-        # MeanPooling(),
+        MeanPooling(),
         QueryScoringAggregator(),
     ]
     prompters = [
         TemplatePrompts(classes),
-        # MPVRPrompts(classes, MPVR_ACTIVITYNET_CLASS_DESC_JSON),
+        MPVRPrompts(classes, MPVR_ACTIVITYNET_CLASS_DESC_JSON),
     ]
 
     # TODO Create matrix for the best method
@@ -135,8 +135,8 @@ def run_experiments():
             continue
 
         # Dataframe to store probabilities of each class for each video for this pipeline
-        prob_data = {cls: [float("nan")] * num_videos for cls in classes}
-        prob_df = pd.DataFrame(prob_data)
+        prob_preds = {cls: [float("nan")] * num_videos for cls in classes}
+        prob_df = pd.DataFrame(prob_preds)
 
         # Combine the metadata df with the empty probability columns
         pipeline_df = pd.concat([dataset.df.copy(), prob_df], axis=1)
@@ -168,8 +168,8 @@ def run_experiments():
         pipeline_df.to_csv(csv_path, index=False)
         print(f"\n\nResults for {pipeline_name} saved to {csv_path}\n\n")
 
-    print("=" * 50)
-    print(f"\nAll experimental results are available in: {OUTPUT_DIR}")
+    print("=" * 10)
+    print(f"\nAll results are available in: {OUTPUT_DIR}")
     print("\nProcessing times for each pipeline (seconds): " + str(model_times))
 
 

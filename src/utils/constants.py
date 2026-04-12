@@ -11,6 +11,8 @@ UCF101_VIDEOS_DIR = DATA_DIR / "UCF-101"
 
 UCF101_EMBEDDINGS_DIR = DATA_DIR / "ucf101_embeddings"
 
+MPVR_CLASS_DESC_JSON = DATA_DIR / "mpvr_descriptions.json"
+
 # ActivityNet Paths
 ACTIVITYNET_DIR = DATA_DIR / "activitynet"
 
@@ -19,9 +21,6 @@ ACTIVITYNET_VIDEOS_DIR = ACTIVITYNET_DIR / "videos"
 ACTIVITYNET_EMBEDDINGS_DIR = ACTIVITYNET_DIR / "embeddings"
 
 ACTIVITYNET_CSV = ACTIVITYNET_DIR / "activitynet_val.csv"
-
-
-MPVR_CLASS_DESC_JSON = DATA_DIR / "mpvr_descriptions.json"
 
 MPVR_ACTIVITYNET_CLASS_DESC_JSON = DATA_DIR / "activitynet_descriptions.json"
 

@@ -3,18 +3,12 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 
 import cv2
-import decord
-import imageio
 import numpy as np
 import torch
 from decord import VideoReader, cpu
 
-# Handle MGSampler dependency: 'compare_ssim' was moved in newer scikit-image versions.
-# We map it here so the original MGSampler logic works without changes.
-try:
-    from skimage.measure import compare_ssim
-except ImportError:
-    from skimage.metrics import structural_similarity as compare_ssim
+# MGSampler dependency: compare_ssim was moved in newer scikit-image versions.
+from skimage.metrics import structural_similarity
 
 
 class Sampler(ABC):
@@ -56,19 +50,18 @@ class UniformSampler(Sampler):
         if num_frames <= 0:
             raise ValueError("Video contains no frames")
 
-        indices_float = torch.linspace(
+        indexes_float = torch.linspace(
             start=0, end=num_frames - 1, steps=self.num_samples
         )
 
-        # Convert to long (for indexing) and clamp (for safety)
-        indices_int = torch.round(indices_float).long()
-        indices_int = torch.clamp(indices_int, 0, num_frames - 1)
+        # need integers  for indexes, so round to nearest int
+        indexes = torch.round(indexes_float).long()
 
-        return indices_int.tolist()
+        return indexes.tolist()
 
 
 # Adapted from the MGSampler implementation:
-# https://github.com/MCG-NJU/MGSampler/tree/main
+# https://github.com/MCG-NJU/MGSampler/tree/main (Apache License 2.0)
 # Full citation is provided in the project README.
 
 
@@ -110,7 +103,7 @@ class MotionGuidedSampler(Sampler):
                 )
 
                 # get the SSIM score between the frames
-                (score, _) = compare_ssim(prev_gray, curr_gray, full=True)
+                (score, _) = structural_similarity(prev_gray, curr_gray, full=True)
                 diff_scores.append(1.0 - score)
 
                 prev_gray = curr_gray

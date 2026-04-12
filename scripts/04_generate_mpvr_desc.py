@@ -1,6 +1,6 @@
 """
 This script file has been copied from the MPVR paper's original code repository from 'generate/ucf101.py' and moderately modified for this project.
-MPVR Repository: https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json
+MPVR Repository: https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json (MIT License)
 
 Modifications/Additions were made to generate descriptions for the ActivityNet Dataset instead of for the UCF101 dataset.
 Improvements were also made to improve readability and maintainability.

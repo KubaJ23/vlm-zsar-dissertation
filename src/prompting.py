@@ -52,8 +52,7 @@ class TemplatePrompts(ClassPrompter):
 
             with torch.no_grad():
                 embeddings = clip.model.get_text_features(**texts)
-                mean_embedding = embeddings.mean(dim=0)
-                class_to_embedding[cls] = mean_embedding
+                class_to_embedding[cls] = embeddings.mean(dim=0)
         self.class_to_embedding = class_to_embedding
 
     def get_prompt_embeddings_map(self) -> dict[str, torch.Tensor]:
@@ -61,7 +60,7 @@ class TemplatePrompts(ClassPrompter):
 
 
 # Adapted from the MPVR implementation:
-# https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json
+# https://github.com/jmiemirza/Meta-Prompting/blob/master/descriptions/gpt/UCF101.json (MIT License)
 # Full citation is provided in the project README.
 class MPVRPrompts(ClassPrompter):
     """Generates text embeddings for each class using MPVR-style descriptions from a JSON file."""

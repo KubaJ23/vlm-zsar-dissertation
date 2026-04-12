@@ -32,15 +32,15 @@ def compute_frame_embeddings(
         for start in range(0, len(frames), batch_size):
             batch = frames[start : start + batch_size]
 
-            # Prepare inputs for CLIP
+            # prepare inputs for CLIP
             inputs = processor(
                 text=None, images=batch, return_tensors="pt", padding=True
             )
             inputs = {k: v.to(DEVICE) for k, v in inputs.items()}
 
-            # Encode images
-            feats = model.get_image_features(**inputs)
-            all_embeddings.append(feats.cpu())
+            # encode images
+            encoded = model.get_image_features(**inputs)
+            all_embeddings.append(encoded.cpu())
 
     if not all_embeddings:
         return None
@@ -58,7 +58,7 @@ def get_video_embeddings(video_path: Path, batch_size: int = 32) -> torch.Tensor
     cap = cv2.VideoCapture(str(video_path))
 
     if not cap.isOpened():
-        print(f"Warning: Could not open video {video_path}")
+        print(f"Could not open video {video_path}")
         return None
 
     while True:
@@ -71,7 +71,7 @@ def get_video_embeddings(video_path: Path, batch_size: int = 32) -> torch.Tensor
     cap.release()
 
     if not frames:
-        print(f"Warning: No frames found in {video_path}")
+        print(f"No frames found in {video_path}")
         return None
 
     return compute_frame_embeddings(frames, batch_size=batch_size)
@@ -92,7 +92,7 @@ def extract_selected_frames(
         ret, frame = cap.read()
 
         if ret:
-            # Convert OpenCV's BGR format to RGB
+            # convert frame to RGB
             frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             frames.append(frame)
         else:

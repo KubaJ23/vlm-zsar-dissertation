@@ -34,12 +34,12 @@ def export_zoo_to_local(dataset: Dataset, dest_video_dir: Path) -> list[dict]:
 
         # path to video in zoo's dataset
         src = Path(sample.filepath)
-        filename = src.name
 
         # destination path
-        dest = class_folder / filename
+        dest = class_folder / src.name
 
         # add record for CSV
+        # this gets the relative path to this video
         rel_path = dest.relative_to(dest_video_dir)
         records.append(
             {
@@ -50,6 +50,7 @@ def export_zoo_to_local(dataset: Dataset, dest_video_dir: Path) -> list[dict]:
             }
         )
 
+        # allows this exporting to be resumed if not finished
         if dest.exists():
             continue
 

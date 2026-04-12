@@ -56,8 +56,7 @@ def build_test_csv():
             }
         )
 
-    df = pd.DataFrame(records)
-    return df
+    return pd.DataFrame(records)
 
 
 def main():
@@ -66,12 +65,12 @@ def main():
     metadata_rows = []
     for _, row in tqdm(df.iterrows(), total=len(df), desc="Extracting metadata"):
         video_path = UCF101_VIDEOS_DIR / row["clip_path"].lstrip("/")
-        meta = extract_video_metadata(video_path)
-        if not meta:
+        md = extract_video_metadata(video_path)
+        if not md:
             continue
 
-        meta["clip_name"] = row["clip_name"]
-        metadata_rows.append(meta)
+        md["clip_name"] = row["clip_name"]
+        metadata_rows.append(md)
 
     metadata_df = pd.DataFrame(metadata_rows)
     df_final = df.merge(metadata_df, on="clip_name", how="inner")

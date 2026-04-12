@@ -29,13 +29,13 @@ def generate_embeddings(
     for _, row in tqdm(
         df.iterrows(), total=len(df), desc="Generating embeddings", leave=False
     ):
-        video_rel = Path(row["clip_path"].lstrip("/"))
-        video_path = videos_dir / video_rel
+        rel_path = Path(row["clip_path"].lstrip("/"))
+        video_path = videos_dir / rel_path
 
-        embed_rel = video_rel.with_suffix(".pt")
+        embed_rel = rel_path.with_suffix(".pt")
         embed_path = embeddings_dir / embed_rel
 
-        # skip existing work
+        # skip existing saved embeddings
         if embed_path.exists():
             continue
 
@@ -43,6 +43,7 @@ def generate_embeddings(
 
         embeddings = get_video_embeddings(video_path)
 
+        # handle if there are no embeddings or the tensor has no items
         if embeddings is None or embeddings.numel() == 0:
             print(f"Warning: no embeddings for {video_path}")
             continue

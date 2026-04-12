@@ -74,7 +74,8 @@ class VideoClassifier:
             sampled = sampled.to(clip.DEVICE)
 
             probabilities = self.aggregator.aggregate(
-                sampled, text_embeddings=text_embeddings
+                frame_embeddings=sampled,
+                text_embeddings=text_embeddings,
             )
 
             return probabilities

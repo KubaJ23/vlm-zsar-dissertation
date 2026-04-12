@@ -12,6 +12,19 @@ from sklearn.metrics import confusion_matrix, recall_score, top_k_accuracy_score
 from statsmodels.stats.contingency_tables import cochrans_q, mcnemar
 from statsmodels.stats.multitest import multipletests
 
+font_size = 15
+plt.rcParams.update(
+    {
+        "font.size": font_size,
+        "axes.titlesize": 16,
+        "axes.labelsize": 16,
+        "xtick.labelsize": font_size,
+        "ytick.labelsize": font_size,
+        "legend.fontsize": font_size,
+        "font.family": "serif",
+    }
+)
+
 metadata_cols = [
     "clip_name",
     "clip_path",
@@ -27,22 +40,18 @@ metadata_cols = [
 ]
 
 
-def calculate_confidence_interval_95(acc: float, n_samples: int) -> float:
-    """Calculates 95% confidence intervals."""
-    return 1.96 * np.sqrt((acc * (1 - acc)) / n_samples)
-
-
 def calculate_brier_scores(
     y_true: np.ndarray, probs: np.ndarray, class_cols: list
 ) -> np.ndarray:
-    """Calculates the multi-class Brier Score per sample (lower is better)."""
-    class_cols = [str(col).strip() for col in class_cols]
+    """calculates the brier Score per video"""
     col_to_idx = {cls_name: i for i, cls_name in enumerate(class_cols)}
     true_indices = np.array([col_to_idx[cls_name] for cls_name in y_true])
 
+    # create matrix of 0s and 1 for the expected values for each video and class
     expected_values = np.zeros_like(probs)
     expected_values[np.arange(len(true_indices)), true_indices] = 1
 
+    # get brier score by calculating difference between expected and predicted probs
     return np.sum((probs - expected_values) ** 2, axis=1)
 
 
@@ -59,23 +68,25 @@ def calculate_ece(
 
     # Map true labels to indices
     col_to_idx = {cls: i for i, cls in enumerate(class_cols)}
-    true_indices = np.array([col_to_idx[lbl] for lbl in y_true])
+    true_idxs = np.array([col_to_idx[label] for label in y_true])
 
-    accuracies = predictions == true_indices
+    accuracies = predictions == true_idxs
 
     bin_boundaries = np.linspace(0, 1, n_bins + 1)
     ece = 0.0
 
-    for bin_lower, bin_upper in zip(bin_boundaries[:-1], bin_boundaries[1:]):
+    for i in range(n_bins):
         # filter for samples in this confidence bin
-        in_bin = (confidences > bin_lower) & (confidences <= bin_upper)
-        prop_in_bin = np.mean(in_bin)
+        in_bin = (confidences > bin_boundaries[i]) & (
+            confidences <= bin_boundaries[i + 1]
+        )
+        fraction_inside_bin = np.mean(in_bin)
 
-        if prop_in_bin > 0:
+        if fraction_inside_bin > 0:
             accuracy_in_bin = np.mean(accuracies[in_bin])
             avg_confidence_in_bin = np.mean(confidences[in_bin])
             # weighted absolute difference
-            ece += np.abs(avg_confidence_in_bin - accuracy_in_bin) * prop_in_bin
+            ece += np.abs(avg_confidence_in_bin - accuracy_in_bin) * fraction_inside_bin
 
     return ece
 
@@ -103,8 +114,10 @@ class ResultsAnalyser:
 
         for result_csv in results_dir.glob("*.csv"):
             df = pd.read_csv(result_csv)
-            name = result_csv.stem.replace("_", ResultsAnalyser.model_name_seperator)
-            self.model_to_df[name] = df
+            pipeline_name = result_csv.stem.replace(
+                "_", ResultsAnalyser.model_name_seperator
+            )
+            self.model_to_df[pipeline_name] = df
 
             class_cols = df.columns.drop(metadata_cols, errors="ignore").tolist()
             probs = df[class_cols].apply(pd.to_numeric).to_numpy()
@@ -115,25 +128,23 @@ class ResultsAnalyser:
             acc_top1 = top_k_accuracy_score(y_true, probs, k=1, labels=class_cols)
             acc_top5 = top_k_accuracy_score(y_true, probs, k=5, labels=class_cols)
 
-            macro_class_acc = recall_score(y_true, y_pred, average="macro")
+            per_class_acc = recall_score(y_true, y_pred, average="macro")
 
             model_brier_scores = calculate_brier_scores(y_true, probs, class_cols)
             model_ece = calculate_ece(y_true, probs, class_cols)
 
-            self.binary_accuracies[name] = (y_pred == y_true).astype(int).tolist()
-            self.brier_scores[name] = model_brier_scores.tolist()
-            self.ece_scores[name] = model_ece
+            self.binary_accuracies[pipeline_name] = (
+                (y_pred == y_true).astype(int).tolist()
+            )
+            self.brier_scores[pipeline_name] = model_brier_scores.tolist()
+            self.ece_scores[pipeline_name] = model_ece
 
             self.results_table.append(
                 {
-                    "model": name,
-                    "Class Accuracies": macro_class_acc * 100,
+                    "model": pipeline_name,
+                    "Class Accuracies": per_class_acc * 100,
                     "Top-1": acc_top1 * 100,
                     "Top-5": acc_top5 * 100,
-                    "Top-1 Error": calculate_confidence_interval_95(acc_top1, len(df))
-                    * 100,
-                    "Top-5 Error": calculate_confidence_interval_95(acc_top5, len(df))
-                    * 100,
                     "Brier Score": model_brier_scores.mean(),
                     "ECE": model_ece * 100,
                 }
@@ -144,6 +155,7 @@ class ResultsAnalyser:
         )
 
     def print_results_table(self):
+        # print with a general format for printing floats, but brier scores and ECE need more decimal places because the results are so similar between pipelines.
         print(
             self.accuracies.to_string(
                 index=False,
@@ -158,10 +170,12 @@ class ResultsAnalyser:
     def show_accuracy_comparison_plot(self):
         """Plots a horizontal bar chart with the different models on the y axis and their accuracies on the x axis"""
 
-        results = self.accuracies.sort_values(by=["Top-1", "Top-5"], ascending=True)
+        results = self.accuracies.sort_values(by="Top-1", ascending=True).copy()
+        # maake hte pipeline name labels shorter so graph can be bigger and clearer
+        results["model"] = results["model"].apply(self.shorten_model_name)
 
         num_models = len(results)
-        fig, ax = plt.subplots(figsize=(16, max(6, num_models * 0.9)))
+        fig, ax = plt.subplots(figsize=(16, max(6, num_models)))
 
         y_pos = np.arange(num_models)
         height = 0.35
@@ -174,8 +188,6 @@ class ResultsAnalyser:
             y_pos - height / 2,
             results["Top-5"],
             height,
-            xerr=results["Top-5 Error"],
-            capsize=5,
             label="Top-5 Accuracy",
             color=color_top5,
         )
@@ -185,12 +197,11 @@ class ResultsAnalyser:
             y_pos + height / 2,
             results["Top-1"],
             height,
-            xerr=results["Top-1 Error"],
-            capsize=5,
             label="Top-1 Accuracy",
             color=color_top1,
         )
 
+        # add the labels per bar so specific accuracy can be read
         ax.bar_label(top1_bars, fmt=" %.1f%%")
         ax.bar_label(top5_bars, fmt=" %.1f%%")
 
@@ -198,43 +209,30 @@ class ResultsAnalyser:
         ax.set_yticklabels(results["model"])
         ax.set_xlabel("Accuracy (%)")
         ax.set_ylabel("Pipeline Configuration")
-        ax.set_title("Action Recognition Performance with 95% Confidence Intervals")
+        ax.set_title("Action Recognition Accuracy")
 
-        # layout
-        all_vals = np.concatenate(
-            [
-                results["Top-1"] - results["Top-1 Error"],
-                results["Top-1"] + results["Top-1 Error"],
-                results["Top-5"] - results["Top-5 Error"],
-                results["Top-5"] + results["Top-5 Error"],
-            ]
-        )
+        # set correct limits on x axis so bar chart is sized correctly and not small
+        xmin = min(results["Top-1"].min(), results["Top-5"].min())
+        xmax = max(results["Top-1"].max(), results["Top-5"].max())
 
-        xmin = all_vals.min()
-        xmax = all_vals.max()
-        margin = (xmax - xmin) * 0.1
+        xpadding = (xmax - xmin) * 0.1
 
-        ax.set_xlim(xmin - margin, xmax + margin)
+        ax.set_xlim(xmin - xpadding, xmax + xpadding)
         ax.grid(axis="x", linestyle="--", alpha=0.5, color="grey")
 
-        ax.legend()
-
-        plt.tight_layout()
         plt.show()
 
     def plot_accuracy_mcnemar_heatmap(self):
         """Pairwise McNemar's tests with Holm correction for hard Accuracy."""
-        accuracies = {
-            self.shorten_model_name(model): acc
-            for model, acc in self.binary_accuracies.items()
-        }
-        binary_df = pd.DataFrame(accuracies)
+        binary_df = pd.DataFrame(
+            {
+                self.shorten_model_name(model): acc
+                for model, acc in self.binary_accuracies.items()
+            }
+        )
         models = list(binary_df.columns)
 
-        q_stat = cochrans_q(binary_df)
-        print(f"Cochran's Q Test p-value: {q_stat.pvalue:.4f}")
-
-        if q_stat.pvalue > 0.05:
+        if cochrans_q(binary_df).pvalue > 0.05:
             print("No statistically significant difference in accuracy found.")
             return
 
@@ -242,74 +240,75 @@ class ResultsAnalyser:
         p_values_list = []
 
         for m1, m2 in pairs:
+            # make a table of where the 2 models agree, disagree and how often one model is correct while the other isnt
             table = pd.crosstab(binary_df[m1], binary_df[m2])
+            # ensure the table is 2x2
             table = table.reindex(index=[0, 1], columns=[0, 1], fill_value=0)
-            res = mcnemar(table, exact=False, correction=True)
-            p_values_list.append(res.pvalue)
+            mcnemar_res = mcnemar(table, exact=False, correction=True)
+            p_values_list.append(mcnemar_res.pvalue)
 
-        _, p_adj, _, _ = multipletests(p_values_list, method="holm")
+        # correct the p values for multiple comparisons
+        _, corrected_ps, _, _ = multipletests(p_values_list, method="holm")
 
-        p_mat = pd.DataFrame(
+        p_table = pd.DataFrame(
             np.ones((len(models), len(models))), index=models, columns=models
         )
-        for (m1, m2), p in zip(pairs, p_adj):
-            p_mat.loc[m1, m2] = p_mat.loc[m2, m1] = p
+        for (m1, m2), p in zip(pairs, corrected_ps):
+            p_table.loc[m1, m2] = p_table.loc[m2, m1] = p
 
         # Create a mask for the upper triangle
-        mask = np.triu(np.ones_like(p_mat, dtype=bool))
+        triangle_mask = np.triu(np.ones_like(p_table, dtype=bool))
 
         fig, ax = plt.subplots(figsize=(12, 10))
         sns.heatmap(
-            p_mat < 0.05,
-            annot=p_mat,
-            mask=mask,
+            p_table < 0.05,
+            annot=p_table,
+            mask=triangle_mask,
             cmap="Blues",
             cbar=False,
-            linewidths=0.5,
-            linecolor="white",
             ax=ax,
         )
 
         ax.set_xticklabels(
             ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor"
         )
-        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
 
         plt.title(
             "Pairwise McNemar's Tests with Holm Correction\n(Blue indicates significant difference, p < 0.05)",
             pad=20,
         )
-        plt.tight_layout()
         plt.show()
 
     def plot_calibration_wilcoxon_heatmap(self):
         """Pairwise Wilcoxon Signed-Rank tests with Holm correction for Brier Scores."""
-        scores = {
-            self.shorten_model_name(model): scores
-            for model, scores in self.brier_scores.items()
-        }
-        brier_df = pd.DataFrame(scores)
+        brier_df = pd.DataFrame(
+            {
+                self.shorten_model_name(model): scores
+                for model, scores in self.brier_scores.items()
+            }
+        )
         models = list(brier_df.columns)
 
-        stat, p_friedman = st.friedmanchisquare(*[brier_df[col] for col in models])
-        print(f"Friedman Test p-value: {p_friedman:.4f}")
+        _, p_friedman = st.friedmanchisquare(*[brier_df[col] for col in models])
+        print(f"friedman test p-value: {p_friedman:.4f}")
 
         if p_friedman > 0.05:
             print("No statistically significant differences in calibration found.")
             return
 
-        melted_df = brier_df.melt(var_name="model", value_name="score")
-        p_mat = sp.posthoc_wilcoxon(
-            melted_df, val_col="score", group_col="model", p_adjust="holm"
+        # change the brier_df shape to have a column for model and score
+        brier_df = brier_df.melt(var_name="model", value_name="score")
+        p_table = sp.posthoc_wilcoxon(
+            brier_df, val_col="score", group_col="model", p_adjust="holm"
         )
 
         # Create a mask for the upper triangle
-        mask = np.triu(np.ones_like(p_mat, dtype=bool))
+        mask = np.triu(np.ones_like(p_table, dtype=bool))
 
-        fig, ax = plt.subplots(figsize=(12, 10))
+        _, ax = plt.subplots(figsize=(12, 10))
         sns.heatmap(
-            (p_mat < 0.05).astype(int),
-            annot=p_mat,
+            (p_table < 0.05).astype(int),
+            annot=p_table,
             mask=mask,
             cmap="Greens",
             vmin=0,
@@ -321,20 +320,18 @@ class ResultsAnalyser:
         ax.set_xticklabels(
             ax.get_xticklabels(), rotation=45, ha="right", rotation_mode="anchor"
         )
-        ax.set_yticklabels(ax.get_yticklabels(), rotation=0)
 
         plt.title(
             "Pairwise Wilcoxon Tests for Calibration (Brier Score)\n(Green indicates significant difference, p < 0.05)",
             pad=20,
         )
-        plt.tight_layout()
         plt.show()
 
     def plot_confused_classes_table(
         self, model_name: str, num_true_classes: int = 10, num_confused_with: int = 3
     ):
         """
-        Plots a table showing classes with the most number of errors, their individual accuracy,
+        Plots a table showing classes with the worst accuracy, their individual accuracy,
         and the specific classes they were most often confused with.
         """
         if model_name not in self.model_to_df:
@@ -346,15 +343,13 @@ class ResultsAnalyser:
         y_true = df["label"]
         y_pred = df[class_cols].idxmax(axis=1)
 
-        recalls = recall_score(y_true, y_pred, average=None, labels=class_cols)
-        class_acc_dict = dict(zip(class_cols, recalls))
+        # get recall for each class in order of class_cols
+        class_accs = recall_score(y_true, y_pred, average=None, labels=class_cols)
 
         errors_mask = y_pred != y_true
 
-        per_class_recall = recall_score(y_true, y_pred, average=None, labels=class_cols)
-
         recall_df = pd.DataFrame(
-            {"class": class_cols, "recall": per_class_recall}
+            {"class": class_cols, "recall": class_accs}
         ).sort_values("recall")
 
         most_confused_classes = recall_df.head(num_true_classes)["class"].tolist()
@@ -367,7 +362,7 @@ class ResultsAnalyser:
 
             confusion_counts = cls_errors.value_counts().head(num_confused_with)
 
-            row = [true_cls, f"{class_acc_dict[true_cls] * 100:.1f}%"]
+            row = [true_cls, f"{class_accs[class_cols.index(true_cls)] * 100:.1f}%"]
 
             for i in range(num_confused_with):
                 if i < len(confusion_counts):
@@ -384,7 +379,7 @@ class ResultsAnalyser:
             f"Mislabelled As\n(Rank {i + 1})" for i in range(num_confused_with)
         ]
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.axis("off")
 
         table = ax.table(
@@ -400,7 +395,8 @@ class ResultsAnalyser:
         table.scale(2.2, 2.6)
 
         plt.title(
-            f"Top {num_true_classes} Problematic Classes\n(Model: {model_name})", pad=50
+            f"Top {num_true_classes} Problematic Classes (Model: {self.shorten_model_name(model_name)})",
+            pad=50,
         )
         plt.show()
 
@@ -419,7 +415,7 @@ class ResultsAnalyser:
             if name not in models:
                 continue
 
-            class_cols = [c for c in df.columns if c not in metadata_cols]
+            class_cols = df.columns.drop(metadata_cols, errors="ignore").tolist()
 
             probs = df[class_cols].to_numpy()
             y_true = df["label"].to_numpy()
@@ -427,15 +423,17 @@ class ResultsAnalyser:
             confidences = np.max(probs, axis=1)
             predictions = np.argmax(probs, axis=1)
             col_to_idx = {cls: i for i, cls in enumerate(class_cols)}
-            true_indices = np.array([col_to_idx[lbl] for lbl in y_true])
+            true_indices = np.array([col_to_idx[label] for label in y_true])
             accuracies = predictions == true_indices
 
             bin_boundaries = np.linspace(0, 1, n_bins + 1)
             bin_accs = []
             bin_confs = []
 
-            for bin_lower, bin_upper in zip(bin_boundaries[:-1], bin_boundaries[1:]):
-                in_bin = (confidences > bin_lower) & (confidences <= bin_upper)
+            for i in range(n_bins):
+                in_bin = (confidences > bin_boundaries[i]) & (
+                    confidences <= bin_boundaries[i + 1]
+                )
                 if np.mean(in_bin) > 0:
                     bin_accs.append(np.mean(accuracies[in_bin]))
                     bin_confs.append(np.mean(confidences[in_bin]))
@@ -444,7 +442,7 @@ class ResultsAnalyser:
                 bin_confs,
                 bin_accs,
                 marker="o",
-                label=f"{name} (ECE: {self.ece_scores[name] * 100:.1f}%)",
+                label=f"{self.shorten_model_name(name)} (ECE: {self.ece_scores[name] * 100:.1f}%)",
             )
 
         plt.xlabel("Predicted Probability")

@@ -41,19 +41,18 @@ class VideoDataset:
         full_embeddings_path = self.embeddings_root / embeddings_relative_path
 
         # Check if the embeddings are stored as a NumPy array or a PyTorch tensor
-        npy_path = full_embeddings_path.with_suffix(".npy")
-        pt_path = full_embeddings_path.with_suffix(".pt")
+        numpy_path = full_embeddings_path.with_suffix(".npy")
+        pytorch_path = full_embeddings_path.with_suffix(".pt")
 
-        if npy_path.exists():
-            array = np.load(npy_path)
-            return torch.from_numpy(array)
-        elif pt_path.exists():
-            return torch.load(pt_path)
+        if numpy_path.exists():
+            return torch.from_numpy(np.load(numpy_path))
+        elif pytorch_path.exists():
+            return torch.load(pytorch_path)
         else:
             raise FileNotFoundError(
                 f"No embedding file found for base path: {full_embeddings_path}"
-                f"\nChecked for: {npy_path}"
-                f"\nAnd for: {pt_path}"
+                f"\nChecked for: {numpy_path}"
+                f"\nAnd for: {pytorch_path}"
             )
 
     def get_video_path(self, video_index: int):
@@ -69,12 +68,9 @@ class VideoDataset:
 
         return video_path
 
-    def get_dataset_size(self):
-        return len(self.df)
-
     def __len__(self):
-        """Allows `len(dataset)` to work."""
-        return self.get_dataset_size()
+        """Allows len(dataset) to work."""
+        return len(self.df)
 
     def __getitem__(self, idx):
         """Allows indexing"""

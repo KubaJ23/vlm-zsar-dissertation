@@ -4,6 +4,16 @@ Repository for the dissertation project: "An End-to-End Analysis of a Training-F
 
 ## Setup
 
+Follow these steps to setup and run scripts for this project. Notebooks can be run by selecting the `zsar_project` kernel for each notebook. Scripts are stored in the `scripts` directory and can be executed by following the steps in the sections below. To run and configure experiments, modify and run the script `02_run_tests.py` in the `scripts` directory.
+
+### Download the `data` directory
+
+The code in this repository assumes there exists the `data` directory in the root. This contains the datasets, metadata, and precomputed embeddings used for running the experiments. The data folder is several GBs so it is not included with the project code.
+
+After downloading this repository, replace the empty, placeholder [data folder](./data/) with the actual data folder from [here](temp).
+
+### Install dependencies
+
 Initialise Conda (Windows):
 ```bash
 conda init cmd.exe
@@ -39,17 +49,44 @@ Deactivate when done:
 conda deactivate
 ```
 
+## File Structure
+
+The project organises code and files into these directories:
+
+- `/data` stores the datasets (videos), video embeddings, and metadata.
+- `/notebooks` is for notebooks, which are used to analyse and visualise the results.
+- `/scripts` directory contains scripts which setup the datasets, precompute embeddings, and run experiments.
+- `/src` directory is for the python modules that contains reusable python code. These modules are imported by the notebooks, scripts, and other modules.
+
+## Running Experiments
+
+To run an experiment with a specific pipeline configuration, follow these steps:
+- Define the sampler, aggregator or prompter class which inherit the appropriate `abstract base class` (ABC) in `/src`.
+- Add instances of the classes to the lists of samplers, aggregators, and prompters in the script `02_run_tests.py`.
+- Select your dataset by creating a `VideoDataset` object.
+- Run the script. A pipeline for each combination of those components will run and save the results to the `/results` directory.
+
+
+
 ## Dataset
 
-This project uses the [UCF101 Action Recognition Dataset](https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition).
+This project uses the [UCF101 Action Recognition](https://www.kaggle.com/datasets/matthewjansen/ucf101-action-recognition) and ActivityNet dataset.
 
-Dataset paper citation:
+Dataset paper citations:
 
 @article{soomro2012ucf101,
   title={Ucf101: A dataset of 101 human actions classes from videos in the wild},
   author={Soomro, Khurram and Zamir, Amir Roshan and Shah, Mubarak},
   journal={arXiv preprint arXiv:1212.0402},
   year={2012}
+}
+
+@inproceedings{caba2015activitynet,
+  title={Activitynet: A large-scale video benchmark for human activity understanding},
+  author={Caba Heilbron, Fabian and Escorcia, Victor and Ghanem, Bernard and Carlos Niebles, Juan},
+  booktitle={Proceedings of the ieee conference on computer vision and pattern recognition},
+  pages={961--970},
+  year={2015}
 }
 
 Dataset download link:
@@ -62,7 +99,9 @@ Dataset download link:
   note={Accessed: 2025-11-05}
 }
 
-This repository already contains the generated embeddings dataset that are required for the action recognition. If you want to recreate the embeddings dataset yourself, follow the instructions [here](colab_instructions.md).
+ActivityNet was downloaded using the FiftyOne tool as explained [here](http://activity-net.org/download.html).
+
+The precomputed embeddings, datasets, and metadata are stored in the `data` directory. Scripts were used to generate the embeddings for each dataset.
 
 ## Citations
 
