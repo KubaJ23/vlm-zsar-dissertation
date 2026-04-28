@@ -1,4 +1,2 @@
-data/UCF-101/*
-data/activitynet/embeddings/*
-data/activitynet/videos/*
+data/*
 **/__pycache__/
