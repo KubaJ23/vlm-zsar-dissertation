@@ -379,6 +379,9 @@ dependencies:
   - zlib-ng=2.2.5=h32d8bfd_0
   - zstandard=0.25.0=py310h1637853_1
   - zstd=1.5.7=hbeecb71_2
+  - pytorch
+  - torchvision
+  - torchaudio
   - pip:
       - aiofiles==25.1.0
       - annotated-types==0.7.0
@@ -442,9 +445,6 @@ dependencies:
       - tabulate==0.9.0
       - taskgroup==0.2.2
       - texttable==1.7.0
-      - torch==2.5.1+cu121
-      - torchaudio==2.5.1+cu121
-      - torchvision==0.20.1+cu121
       - typing-inspection==0.4.2
       - tzlocal==5.3.1
       - universal-analytics-python3==1.1.1
